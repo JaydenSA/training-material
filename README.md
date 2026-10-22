@@ -114,5 +114,6 @@ Playwright covers successful tipping/rating and persistence, employee archive/ta
 
 This is a client-review demo with integration foundations, not a production payment platform. Final legal copy, subscription pricing, employee publication permissions, fraud controls, shared tenant persistence, merchant onboarding, support operations, and live payment verification require completion before launch. `/admin` deliberately exposes no privileged operations. `/leaderboard` is a deferred-feature page. No real customer or card data should be entered in the demo.
 
-#   t r a i n i n g - m a t e r i a l  
+#   t r a i n i n g - m a t e r i a l 
+ 
  
