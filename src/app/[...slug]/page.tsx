@@ -1,2 +1,44 @@
-import { TipitApp } from '@/components/tipit-app';
-export default async function Page({ params }: { params: Promise<{ slug: string[] }> }) { const { slug } = await params; return <TipitApp segments={slug} />; }
+import { TipitApp } from "@/components/tipit-app";
+import { notFound } from "next/navigation";
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string[] }>;
+}) {
+  const { slug: original } = await params;
+  const sandbox = original[0] === "demo";
+  const simulation = original[0] === "simulation";
+  const slug = sandbox ? (original.length === 1 ? ["dashboard"] : original.slice(1)) : simulation ? original.slice(1) : original;
+  if (simulation && !(slug[0] === "payment" && slug.length === 2)) notFound();
+  const [root] = slug;
+  const publicPages = [
+    "choose-organization",
+    "pricing",
+    "how-it-works",
+    "help",
+    "privacy",
+    "terms",
+    "sign-in",
+    "sign-up",
+    "onboarding",
+    "account",
+  ];
+  const sections = [
+    "employees",
+    "tips",
+    "ratings",
+    "tags",
+    "hardware",
+    "settings",
+  ];
+  const supported =
+    (publicPages.includes(root) && slug.length === 1) ||
+    (root === "dashboard" &&
+      (slug.length === 1 ||
+        (slug.length === 2 && sections.includes(slug[1])) ||
+        (slug.length === 3 && slug[1] === "employees"))) ||
+    (["r", "tip"].includes(root) && slug.length === 3) ||
+    (["t", "payment"].includes(root) && slug.length === 2);
+  if (!supported) notFound();
+  return <TipitApp segments={slug} />;
+}

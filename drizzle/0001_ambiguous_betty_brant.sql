@@ -1,0 +1,2 @@
+ALTER TABLE "tips" ADD COLUMN "review" text;--> statement-breakpoint
+ALTER TABLE "tips" ADD CONSTRAINT "tip_review_eligibility" CHECK ("tips"."review" is null or ("tips"."rating" is not null and char_length("tips"."review") between 1 and 1000));

@@ -1,47 +1,648 @@
-'use client';
-import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
-import { useDemo } from './demo-provider';
-import { Employee, money, ratingFor } from '@/lib/demo';
-import { Employees, Tags, Hardware, Settings, Ratings } from './workspace-pages';
-import { PublicTip, Payment } from './tipping-pages';
-import { Access, Info, Pricing, HowItWorks } from './public-pages';
+"use client";
+import Link from "./app-link";
+import { useState } from "react";
+import { useDemo } from "./demo-provider";
+import { DashboardSkeleton } from "./dashboard-skeleton";
+import { money, ratingFor } from "@/lib/demo";
+import {
+  Employees,
+  Tags,
+  Hardware,
+  Settings,
+  Ratings,
+} from "./workspace-pages";
+import { PublicTip, Payment } from "./tipping-pages";
+import { Access, Info, Pricing, HowItWorks } from "./public-pages";
+import { AuthControls, AccountIdentity } from "./auth-controls";
+import {
+  Logo,
+  Avatar,
+  Badge,
+  Heading,
+  Empty,
+  DemoNotice,
+  Header,
+  Footer,
+} from "./ui";
 
-export function Logo() { return <Link href="/" className="logo"><span>♥</span>tipit<span className="logo-dot">.</span></Link>; }
-export function Avatar({ employee, large = false }: { employee: Employee; large?: boolean }) { return <div className={`avatar ${large ? 'large' : ''}`} style={{ background: employee.color }}>{employee.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div>; }
-export function Badge({ children, muted = false }: { children: ReactNode; muted?: boolean }) { return <span className={`badge ${muted ? 'muted' : ''}`}>{children}</span>; }
-export function Heading({ eyebrow, title, children, action }: { eyebrow?: string; title: string; children?: ReactNode; action?: ReactNode }) { return <div className="heading"><div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h1>{title}</h1>{children && <p>{children}</p>}</div>{action}</div>; }
-export function Empty({ children }: { children: ReactNode }) { return <div className="empty">{children}</div>; }
-export function DemoNotice() { return <div className="demo-notice"><span className="dot" /> Demo workspace <span className="notice-detail">· No real payments</span></div>; }
-export function Header() { return <header className="public-header"><Logo /><nav><Link href="/how-it-works">How it works</Link><Link href="/pricing">Pricing</Link><Link href="/r/the-green-table">Meet the team</Link></nav><Link href="/dashboard" className="button small">Explore demo ↗</Link></header>; }
-function Footer() { return <footer><Logo /><p>A little thanks goes a long way.</p><div><Link href="/help">Help</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div><small>Tips are received by the restaurant. Restaurant management handles staff distribution.</small></footer>; }
 export function TipitApp({ segments }: { segments: string[] }) {
-  const root = segments[0] || ''; const { ready } = useDemo();
-  if (!ready) return <div className="loading">Loading your Tipit experience…</div>;
-  if (root === 'dashboard') return <Dashboard section={segments[1] || ''} id={segments[2]} />;
-  if (['r', 't', 'tip'].includes(root)) return <PublicTip segments={segments} />;
-  if (root === 'payment') return <Payment id={segments[1]} />;
-  return <><Header />{root === '' ? <Landing /> : root === 'pricing' ? <Pricing /> : root === 'how-it-works' ? <HowItWorks /> : ['help', 'privacy', 'terms'].includes(root) ? <Info page={root} /> : ['sign-in', 'sign-up', 'onboarding', 'account'].includes(root) ? <Access page={root} /> : <div className="public-content"><Heading title={root === 'leaderboard' ? 'Great service deserves appreciation.' : root === 'admin' ? 'Platform administration' : 'Page unavailable'}>{root === 'leaderboard' ? 'Public rankings are planned for later. Meet the team through their restaurant profile.' : root === 'admin' ? 'Live administration requires an authenticated platform role. Demo access is limited to the restaurant workspace.' : 'Return to the restaurant workspace to continue.'}</Heading><Link href="/dashboard" className="button">Restaurant demo ↗</Link></div>}<Footer /></>;
+  const root = segments[0] || "";
+  const { ready } = useDemo();
+  if (root === "dashboard")
+    return <Dashboard section={segments[1] || ""} id={segments[2]} />;
+  if (!ready)
+    return <div className="loading">Loading your Tipit experience…</div>;
+  if (["r", "t", "tip"].includes(root))
+    return <PublicTip segments={segments} />;
+  if (root === "payment") return <Payment id={segments[1]} />;
+  return (
+    <>
+      <Header />
+      {root === "" ? (
+        <Landing />
+      ) : root === "pricing" ? (
+        <Pricing />
+      ) : root === "how-it-works" ? (
+        <HowItWorks />
+      ) : ["help", "privacy", "terms"].includes(root) ? (
+        <Info page={root} />
+      ) : [
+          "sign-in",
+          "sign-up",
+          "onboarding",
+          "account",
+          "choose-organization",
+        ].includes(root) ? (
+        <Access page={root} />
+      ) : (
+        <div className="public-content">
+          <Heading title={"Page unavailable"}>
+            {"Return to the restaurant workspace to continue."}
+          </Heading>
+          <Link href="/dashboard" className="button">
+            Restaurant demo ↗
+          </Link>
+        </div>
+      )}
+      <Footer />
+    </>
+  );
 }
 function Landing() {
- const { state } = useDemo();
- return <><main className="hero"><div className="hero-copy"><span className="pill">MADE FOR RESTAURANTS. INSPIRED BY PEOPLE.</span><h1>Great service.<br />A little <em>extra thanks.</em></h1><p>Turn a simple tap into a meaningful thank you. Cashless tips for your team, all in your restaurant’s Yoco account.</p><div className="actions"><Link href="/dashboard" className="button">Explore the restaurant demo ↗</Link><Link href="/t/GT-001" className="button secondary">Try leaving a tip</Link></div><div className="hero-proof"><span>✓ No customer signup</span><span>✓ QR & NFC ready</span><span>✓ Your Yoco account</span></div></div><div className="hero-visual"><div className="orbit one" /><div className="orbit two" /><span className="floating-note note-top">✦ A small gesture. A big difference.</span><div className="phone"><div className="phone-notch" /><div className="mini-brand">♥ tipit.</div><Avatar employee={state.employees[0]} large /><small>{state.restaurant.name}</small><h3>Say thanks to Sarah</h3><p>Made your visit a little brighter?</p><div className="amount-preview"><span>R20</span><span className="selected">R50</span><span>R100</span></div><Link href="/t/GT-001" className="button">Leave a little thanks ♥</Link><div className="mini-rating">★★★★★ <span>Sample guest appreciation</span></div></div><div className="floating-note note-bottom"><span className="success-icon">✓</span><div><strong>A little appreciation received</strong><small>For the people who make your day.</small></div></div></div></main><div className="trust-strip"><span>Less friction. More appreciation.</span><strong>Scan or tap</strong><span>✦</span><strong>Choose a tip</strong><span>✦</span><strong>Make someone’s day</strong></div><section className="section"><div className="center"><div className="eyebrow">THOUGHTFUL BY DESIGN</div><h2>Simple for guests.<br />Meaningful for your team.</h2><p>Everything your restaurant needs to make appreciation effortless.</p></div><div className="feature-grid">{[['▦', 'One tap. One thank you.', 'A QR code or NFC card takes guests straight to the right employee. No app. No account.'], ['↗', 'Your restaurant. Your account.', 'Payments are received through your Yoco account, with every tip attributed to a team member.'], ['☆', 'Let great service shine.', 'Give every employee a personal profile and collect ratings linked to confirmed tips.']].map(([icon, title, text]) => <article className="feature" key={title}><span className="feature-icon">{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div></section><section className="cta"><div><div className="eyebrow">A HAPPIER WAY TO SAY THANKS</div><h2>Your team brings the care.<br />We make appreciation easy.</h2></div><Link href="/onboarding" className="button">Set up a demo restaurant ↗</Link></section></>;
+  const { state } = useDemo();
+  return (
+    <>
+      <main className="hero">
+        <div className="hero-copy">
+          <span className="pill">
+            MADE FOR RESTAURANTS. INSPIRED BY PEOPLE.
+          </span>
+          <h1>
+            Great service.
+            <br />A little <em>extra thanks.</em>
+          </h1>
+          <p>
+            Turn a simple tap into a meaningful thank you. Cashless tips for
+            your team, all in your restaurant’s Yoco account.
+          </p>
+          <div className="actions">
+            <Link href="/demo/dashboard" className="button">
+              Explore the restaurant demo
+            </Link>
+            <Link href="/demo/t/GT-001" className="button secondary">
+              Try leaving a tip
+            </Link>
+          </div>
+          <div className="hero-proof">
+            <span>✓ No customer signup</span>
+            <span>✓ QR & NFC ready</span>
+            <span>✓ Your Yoco account</span>
+          </div>
+        </div>
+        <div className="hero-visual">
+          <div className="orbit one" />
+          <div className="orbit two" />
+          <span className="floating-note note-top">
+            ✦ A small gesture. A big difference.
+          </span>
+          <div className="phone">
+            <div className="phone-notch" />
+            <div className="mini-brand">♥ tipit.</div>
+            <Avatar employee={state.employees[0]} large />
+            <small>{state.restaurant.name}</small>
+            <h3>Say thanks to Sarah</h3>
+            <p>Made your visit a little brighter?</p>
+            <div className="amount-preview">
+              <span>R20</span>
+              <span className="selected">R50</span>
+              <span>R100</span>
+            </div>
+            <Link href="/demo/t/GT-001" className="button">
+              Leave a little thanks ♥
+            </Link>
+            <div className="mini-rating">
+              ★★★★★ <span>Sample guest appreciation</span>
+            </div>
+          </div>
+          <div className="floating-note note-bottom">
+            <span className="success-icon">✓</span>
+            <div>
+              <strong>A little appreciation received</strong>
+              <small>For the people who make your day.</small>
+            </div>
+          </div>
+        </div>
+      </main>
+      <div className="trust-strip">
+        <span>Less friction. More appreciation.</span>
+        <strong>Scan or tap</strong>
+        <span>✦</span>
+        <strong>Choose a tip</strong>
+        <span>✦</span>
+        <strong>Make someone’s day</strong>
+      </div>
+      <section className="section">
+        <div className="center">
+          <div className="eyebrow">THOUGHTFUL BY DESIGN</div>
+          <h2>
+            Simple for guests.
+            <br />
+            Meaningful for your team.
+          </h2>
+          <p>
+            Everything your restaurant needs to make appreciation effortless.
+          </p>
+        </div>
+        <div className="feature-grid">
+          {[
+            [
+              "▦",
+              "One tap. One thank you.",
+              "A QR code or NFC card takes guests straight to the right employee. No app. No account.",
+            ],
+            [
+              "↗",
+              "Your restaurant. Your account.",
+              "Payments are received through your Yoco account, with every tip attributed to a team member.",
+            ],
+            [
+              "☆",
+              "Let great service shine.",
+              "Give every employee a personal profile and collect ratings linked to confirmed tips.",
+            ],
+          ].map(([icon, title, text]) => (
+            <article className="feature" key={title}>
+              <span className="feature-icon">{icon}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <HowItWorks embedded />
+      <Pricing embedded />
+      <section className="cta">
+        <div>
+          <div className="eyebrow">A HAPPIER WAY TO SAY THANKS</div>
+          <h2>
+            Your team brings the care.
+            <br />
+            We make appreciation easy.
+          </h2>
+        </div>
+        <Link href="/onboarding" className="button">
+          Set up a demo restaurant
+        </Link>
+      </section>
+    </>
+  );
 }
-const nav = [['Overview', '/dashboard', '◫'], ['Employees', '/dashboard/employees', '♧'], ['Tips & transactions', '/dashboard/tips', '↗'], ['Ratings', '/dashboard/ratings', '☆'], ['QR & NFC tags', '/dashboard/tags', '▦'], ['Hardware shop', '/dashboard/hardware', '▱'], ['Settings', '/dashboard/settings', '⚙']];
+const nav = [
+  ["Overview", "/dashboard", "◫"],
+  ["Employees", "/dashboard/employees", "♧"],
+  ["Tips & transactions", "/dashboard/tips", "↗"],
+  ["Ratings", "/dashboard/ratings", "☆"],
+  ["QR & NFC tags", "/dashboard/tags", "▦"],
+  ["Hardware shop", "/dashboard/hardware", "▱"],
+  ["Settings", "/dashboard/settings", "⚙"],
+];
 function Dashboard({ section, id }: { section: string; id?: string }) {
- const { state } = useDemo(); const [menu, setMenu] = useState(false);
- return <div className="app-shell"><aside className={`sidebar ${menu ? 'open' : ''}`}><Logo /><div className="workspace"><span className="restaurant-icon">G</span><div><strong>{state.restaurant.name}</strong><small>Restaurant workspace</small></div></div><div className="sidebar-label">WORKSPACE</div><nav>{nav.map(([label, href, icon]) => <Link onClick={() => setMenu(false)} className={('/dashboard/' + section).replace(/\/$/, '') === href ? 'active' : ''} key={href} href={href}><span aria-hidden="true">{icon}</span>{label}</Link>)}</nav><div className="sidebar-bottom"><div className="help-card"><strong>A little help?</strong><p>We’re here for your restaurant.</p><Link href="/help">Visit help centre ↗</Link></div><Link href={`/r/${state.restaurant.slug}`} className="preview-link">View public restaurant ↗</Link><Link href="/account" className="account-row"><span className="account-avatar">AM</span><span>Alex Morgan<small>Restaurant owner · Demo</small></span></Link></div></aside><div className="dashboard-main"><header className="dashboard-top"><button className="mobile-menu" aria-label="Toggle navigation" onClick={() => setMenu(!menu)}>☰</button><div className="breadcrumb">Workspace <span>/</span> {nav.find(n => n[1] === `/dashboard${section ? '/' + section : ''}`)?.[0] || 'Employee profile'}</div><DemoNotice /><Link className="top-avatar" href="/account" aria-label="Account">AM</Link></header><main className="dashboard-content">{section === '' ? <Overview /> : section === 'employees' ? <Employees id={id} /> : section === 'tips' ? <Transactions /> : section === 'ratings' ? <Ratings /> : section === 'tags' ? <Tags /> : section === 'hardware' ? <Hardware /> : section === 'settings' ? <Settings /> : <Empty>Page unavailable. <Link href="/dashboard">Return to overview</Link></Empty>}</main><div className="dashboard-footer">Made for the people behind every great meal. <span>♥ tipit.</span></div></div></div>;
+  const { state, ready, loadError, retry } = useDemo();
+  const [menu, setMenu] = useState(false);
+  return (
+    <div className="app-shell">
+      <aside className={`sidebar ${menu ? "open" : ""}`}>
+        <Logo />
+        <div className="workspace">
+          <span className="restaurant-icon">{state.restaurant.name.charAt(0) || "♥"}</span>
+          <div>
+            <strong>{state.restaurant.name || "Restaurant workspace"}</strong>
+            <small>Restaurant workspace</small>
+          </div>
+        </div>
+        <div className="sidebar-label">WORKSPACE</div>
+        <nav>
+          {nav.map(([label, href, icon]) => (
+            <Link
+              onClick={() => setMenu(false)}
+              className={
+                ("/dashboard/" + section).replace(/\/$/, "") === href
+                  ? "active"
+                  : ""
+              }
+              key={href}
+              href={href}
+            >
+              <span aria-hidden="true">{icon}</span>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="help-card">
+            <strong>A little help?</strong>
+            <p>We’re here for your restaurant.</p>
+            <Link href="/help">Visit help centre ↗</Link>
+          </div>
+          <AccountIdentity />
+        </div>
+      </aside>
+      <div className="dashboard-main">
+        <header className="dashboard-top">
+          <button
+            className="mobile-menu"
+            aria-label="Toggle navigation"
+            onClick={() => setMenu(!menu)}
+          >
+            ☰
+          </button>
+          <div className="breadcrumb">
+            Workspace <span>/</span>{" "}
+            {nav.find(
+              (n) => n[1] === `/dashboard${section ? "/" + section : ""}`,
+            )?.[0] || "Employee profile"}
+          </div>
+          <DemoNotice />
+          <AuthControls compact />
+        </header>
+        <main className="dashboard-content" aria-busy={!ready}>
+          {!ready ? <DashboardSkeleton section={section} detail={!!id} /> : loadError ? (
+            <section className="panel pad" role="alert">
+              <h1>Restaurant data is unavailable.</h1>
+              <p>{loadError}</p>
+              <button className="button" onClick={retry}>Try again</button>
+            </section>
+          ) : section === "" ? (
+            <Overview />
+          ) : section === "employees" ? (
+            <Employees id={id} />
+          ) : section === "tips" ? (
+            <Transactions />
+          ) : section === "ratings" ? (
+            <Ratings />
+          ) : section === "tags" ? (
+            <Tags />
+          ) : section === "hardware" ? (
+            <Hardware />
+          ) : section === "settings" ? (
+            <Settings />
+          ) : (
+            <Empty>
+              Page unavailable.{" "}
+              <Link href="/dashboard">Return to overview</Link>
+            </Empty>
+          )}
+        </main>
+        <div className="dashboard-footer">
+          Made for the people behind every great meal. <span>♥ tipit.</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 function Overview() {
- const { state } = useDemo(); const paid = state.tips.filter(t => t.status === 'paid'); const rated = paid.filter(t => t.rating);
- const chart = Array.from({ length: 7 }, (_, i) => { const date = new Date(); date.setDate(date.getDate() - (6 - i)); return { label: date.toLocaleDateString('en-ZA', { weekday: 'short', timeZone: 'Africa/Johannesburg' }), amount: paid.filter(t => new Date(t.createdAt).toLocaleDateString('en-ZA', { timeZone: 'Africa/Johannesburg' }) === date.toLocaleDateString('en-ZA', { timeZone: 'Africa/Johannesburg' })).reduce((s, t) => s + t.amount, 0) }; }); const max = Math.max(...chart.map(d => d.amount), 1);
- return <><Heading eyebrow="YOUR RESTAURANT AT A GLANCE" title="A little thanks, adding up." action={<Link className="button small" href="/dashboard/employees">+ Add team member</Link>}>Here’s how your team is making a difference.</Heading><div className="welcome-banner"><div><Badge>THE GREEN SIDE OF GREAT SERVICE</Badge><h3>Good people. Great service. Well-deserved tips.</h3><p>Every tip is attributed to your team and received by your restaurant.</p></div><div className="banner-flower">✳</div></div><div className="stats"><Stat label="Confirmed tips" value={money(paid.reduce((s, t) => s + t.amount, 0))} note="Gross tips · before restaurant fees" icon="↗" /><Stat label="Successful payments" value={String(paid.length)} note="Sample confirmed transactions" icon="▤" /><Stat label="Team appreciation" value={rated.length ? `${(rated.reduce((s, t) => s + (t.rating || 0), 0) / rated.length).toFixed(1)} / 5` : '—'} note={`${rated.length} ratings from confirmed tips`} icon="☆" /><Stat label="Active team members" value={String(state.employees.filter(e => !e.deletedAt).length)} note={`${state.tags.filter(t => t.status === 'active').length} active QR & NFC tags`} icon="♧" /></div><div className="overview-grid"><section className="panel"><div className="panel-heading"><div><h3>Appreciation over time</h3><p>Confirmed gross tips · last 7 days</p></div><Badge muted>This week</Badge></div><div className="chart-summary">{money(chart.reduce((s, d) => s + d.amount, 0))}<small>in the last seven calendar days</small></div><div className="chart" aria-label="Gross tips by day, last seven days">{chart.map((d, i) => <div className="chart-column" key={i}><small>{money(d.amount)}</small><div className="bar-track"><div className="bar" style={{ height: `${Math.max(2, d.amount / max * 100)}%` }} /></div><span>{d.label}</span></div>)}</div></section><section className="panel"><div className="panel-heading"><div><h3>People making a difference</h3><p>Your team’s appreciation</p></div><Link href="/dashboard/employees">View all ↗</Link></div><div className="team-list">{state.employees.filter(e => !e.deletedAt).map(e => <Link href={`/dashboard/employees/${e.id}`} className="team-row" key={e.id}><Avatar employee={e} /><div><strong>{e.name}</strong><small>{e.role}</small></div><div className="team-value"><strong>{money(paid.filter(t => t.employeeId === e.id).reduce((s, t) => s + t.amount, 0))}</strong><small>★ {ratingFor(state, e.id).average.toFixed(1)}</small></div></Link>)}</div></section></div><Transactions compact /></>;
+  const { state, mode } = useDemo();
+  const paid = state.tips.filter((t) => t.status === "paid");
+  const rated = paid.filter((t) => t.rating);
+  const chart = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    return {
+      label: date.toLocaleDateString("en-ZA", {
+        weekday: "short",
+        timeZone: "Africa/Johannesburg",
+      }),
+      amount: paid
+        .filter(
+          (t) =>
+            new Date(t.createdAt).toLocaleDateString("en-ZA", {
+              timeZone: "Africa/Johannesburg",
+            }) ===
+            date.toLocaleDateString("en-ZA", {
+              timeZone: "Africa/Johannesburg",
+            }),
+        )
+        .reduce((s, t) => s + t.amount, 0),
+    };
+  });
+  const max = Math.max(...chart.map((d) => d.amount), 1);
+  return (
+    <>
+      <Heading
+        eyebrow="YOUR RESTAURANT AT A GLANCE"
+        title="A little thanks, adding up."
+        action={
+          <Link className="button small" href="/dashboard/employees">
+            + Add team member
+          </Link>
+        }
+      >
+        Here’s how your team is making a difference.
+      </Heading>
+      <div className="welcome-banner">
+        <div>
+          <Badge>THE GREEN SIDE OF GREAT SERVICE</Badge>
+          <h3>Good people. Great service. Well-deserved tips.</h3>
+          <p>
+            Every tip is attributed to your team and received by your
+            restaurant.
+          </p>
+        </div>
+        <div className="banner-flower">✳</div>
+      </div>
+      <div className="stats">
+        <Stat
+          label="Confirmed tips"
+          value={money(paid.reduce((s, t) => s + t.amount, 0))}
+          note="Gross tips · before restaurant fees"
+          icon="↗"
+        />
+        <Stat
+          label="Successful payments"
+          value={String(paid.length)}
+          note={
+            mode === "database"
+              ? "Provider-confirmed transactions"
+              : "Sample confirmed transactions"
+          }
+          icon="▤"
+        />
+        <Stat
+          label="Team appreciation"
+          value={
+            rated.length
+              ? `${(rated.reduce((s, t) => s + (t.rating || 0), 0) / rated.length).toFixed(1)} / 5`
+              : "—"
+          }
+          note={`${rated.length} ratings from confirmed tips`}
+          icon="☆"
+        />
+        <Stat
+          label="Active team members"
+          value={String(state.employees.filter((e) => !e.deletedAt).length)}
+          note={`${state.tags.filter((t) => t.status === "active").length} active QR & NFC tags`}
+          icon="♧"
+        />
+      </div>
+      <div className="overview-grid">
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <h3>Appreciation over time</h3>
+              <p>Confirmed gross tips · last 7 days</p>
+            </div>
+            <Badge muted>This week</Badge>
+          </div>
+          <div className="chart-summary">
+            {money(chart.reduce((s, d) => s + d.amount, 0))}
+            <small>in the last seven calendar days</small>
+          </div>
+          <div
+            className="chart"
+            aria-label="Gross tips by day, last seven days"
+          >
+            {chart.map((d, i) => (
+              <div className="chart-column" key={i}>
+                <small>{money(d.amount)}</small>
+                <div className="bar-track">
+                  <div
+                    className="bar"
+                    style={{
+                      height: `${Math.max(2, (d.amount / max) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <span>{d.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <h3>People making a difference</h3>
+              <p>Your team’s appreciation</p>
+            </div>
+            <Link href="/dashboard/employees">View all ↗</Link>
+          </div>
+          <div className="team-list">
+            {state.employees
+              .filter((e) => !e.deletedAt)
+              .map((e) => (
+                <Link
+                  href={`/dashboard/employees/${e.id}`}
+                  className="team-row"
+                  key={e.id}
+                >
+                  <Avatar employee={e} />
+                  <div>
+                    <strong>{e.name}</strong>
+                    <small>{e.role}</small>
+                  </div>
+                  <div className="team-value">
+                    <strong>
+                      {money(
+                        paid
+                          .filter((t) => t.employeeId === e.id)
+                          .reduce((s, t) => s + t.amount, 0),
+                      )}
+                    </strong>
+                    <small>★ {ratingFor(state, e.id).average.toFixed(1)}</small>
+                  </div>
+                </Link>
+              ))}
+          </div>
+        </section>
+      </div>
+      <Transactions compact />
+    </>
+  );
 }
-function Stat({ label, value, note, icon }: { label: string; value: string; note: string; icon: string }) { return <article className="stat"><div>{label}<span>{icon}</span></div><strong>{value}</strong><small>{note}</small></article>; }
+function Stat({
+  label,
+  value,
+  note,
+  icon,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  icon: string;
+}) {
+  return (
+    <article className="stat">
+      <div>
+        {label}
+        <span>{icon}</span>
+      </div>
+      <strong>{value}</strong>
+      <small>{note}</small>
+    </article>
+  );
+}
 export function Transactions({ compact = false }: { compact?: boolean }) {
- const { state } = useDemo(); const [query, setQuery] = useState(''); const [status, setStatus] = useState('all'); const [period, setPeriod] = useState('all');
- const rows = state.tips.filter(t => (status === 'all' || status === t.status) && (period === 'all' || Date.now() - new Date(t.createdAt).getTime() <= Number(period) * 86400000) && (state.employees.find(e => e.id === t.employeeId)?.name.toLowerCase().includes(query.toLowerCase()) || t.id.toLowerCase().includes(query.toLowerCase()))).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
- function exportCSV() { const quote = (v: string) => `"${v.replace(/"/g, '""')}"`; const csv = 'Reference,Employee,Gross ZAR,Status,Date\n' + rows.map(t => [t.id, state.employees.find(e => e.id === t.employeeId)?.name || 'Archived employee', (t.amount / 100).toFixed(2), t.status, t.createdAt].map(v => quote(/^[=+@\-\t\r]/.test(v) ? "'" + v : v)).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })); const a = document.createElement('a'); a.href = url; a.download = 'tipit-transactions.csv'; a.click(); URL.revokeObjectURL(url); }
- return <>{!compact && <Heading title="Tips & transactions">Every thank you, clearly accounted for. Staff distribution is managed by your restaurant.</Heading>}<section className="panel"><div className="panel-heading"><div><h3>{compact ? 'Recent appreciation' : 'Transaction history'}</h3><p>{compact ? 'The latest tips received by your restaurant' : 'Gross amounts shown. Processing fees are paid by the restaurant.'}</p></div>{compact ? <Link href="/dashboard/tips">View all transactions ↗</Link> : <button className="button secondary small" onClick={exportCSV}>↓ Export CSV</button>}</div>{!compact && <div className="filters"><input aria-label="Search transactions" placeholder="Search employee or reference…" value={query} onChange={e => setQuery(e.target.value)} /><select aria-label="Payment status" value={status} onChange={e => setStatus(e.target.value)}>{['all', 'paid', 'pending', 'failed', 'refunded', 'cancelled'].map(s => <option key={s} value={s}>{s === 'all' ? 'All statuses' : s}</option>)}</select><select aria-label="Date range" value={period} onChange={e => setPeriod(e.target.value)}><option value="all">All dates</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></div>}<div className="table-scroll"><table><thead><tr><th>TEAM MEMBER</th><th>DATE</th><th>GROSS TIP</th><th>STATUS</th><th>REFERENCE</th></tr></thead><tbody>{(compact ? rows.slice(0, 5) : rows).map(t => { const e = state.employees.find(e => e.id === t.employeeId); return <tr key={t.id}><td><div className="person">{e && <Avatar employee={e} />}<strong>{e?.name || 'Archived employee'}</strong></div></td><td>{new Date(t.createdAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', timeZone: 'Africa/Johannesburg' })}</td><td className="amount">{money(t.amount)}</td><td><Badge muted={t.status !== 'paid'}>{t.status === 'paid' ? 'Confirmed' : t.status}</Badge></td><td><Link className="reference" href={`/payment/${t.id}`}>{t.id}</Link></td></tr>; })}</tbody></table>{rows.length === 0 && <Empty>No transactions match your filters.</Empty>}</div><div className="table-foot">{Math.min(rows.length, compact ? 5 : rows.length)} of {rows.length} transactions <span>Payments received by {state.restaurant.name}</span></div></section></>;
+  const { state } = useDemo();
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("all");
+  const [period, setPeriod] = useState("all");
+  const rows = state.tips
+    .filter(
+      (t) =>
+        (status === "all" || status === t.status) &&
+        (period === "all" ||
+          Date.now() - new Date(t.createdAt).getTime() <=
+            Number(period) * 86400000) &&
+        (state.employees
+          .find((e) => e.id === t.employeeId)
+          ?.name.toLowerCase()
+          .includes(query.toLowerCase()) ||
+          t.id.toLowerCase().includes(query.toLowerCase())),
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  function exportCSV() {
+    const quote = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    const csv =
+      "Reference,Employee,Gross ZAR,Status,Date\n" +
+      rows
+        .map((t) =>
+          [
+            t.id,
+            state.employees.find((e) => e.id === t.employeeId)?.name ||
+              "Archived employee",
+            (t.amount / 100).toFixed(2),
+            t.status,
+            t.createdAt,
+          ]
+            .map((v) => quote(/^[=+@\-\t\r]/.test(v) ? "'" + v : v))
+            .join(","),
+        )
+        .join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    );
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "tipit-transactions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  return (
+    <>
+      {!compact && (
+        <Heading title="Tips & transactions">
+          Every thank you, clearly accounted for. Staff distribution is managed
+          by your restaurant.
+        </Heading>
+      )}
+      <section className="panel">
+        <div className="panel-heading">
+          <div>
+            <h3>{compact ? "Recent appreciation" : "Transaction history"}</h3>
+            <p>
+              {compact
+                ? "The latest tips received by your restaurant"
+                : "Gross amounts shown. Processing fees are paid by the restaurant."}
+            </p>
+          </div>
+          {compact ? (
+            <Link href="/dashboard/tips">View all transactions ↗</Link>
+          ) : (
+            <button className="button secondary small" onClick={exportCSV}>
+              ↓ Export CSV
+            </button>
+          )}
+        </div>
+        {!compact && (
+          <div className="filters">
+            <input
+              aria-label="Search transactions"
+              placeholder="Search employee or reference…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <select
+              aria-label="Payment status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              {[
+                "all",
+                "paid",
+                "pending",
+                "failed",
+                "refunded",
+                "cancelled",
+              ].map((s) => (
+                <option key={s} value={s}>
+                  {s === "all" ? "All statuses" : s}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Date range"
+              value={period}
+              onChange={(e) => setPeriod(e.target.value)}
+            >
+              <option value="all">All dates</option>
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+            </select>
+          </div>
+        )}
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>TEAM MEMBER</th>
+                <th>DATE</th>
+                <th>GROSS TIP</th>
+                <th>STATUS</th>
+                <th>REFERENCE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(compact ? rows.slice(0, 5) : rows).map((t) => {
+                const e = state.employees.find((e) => e.id === t.employeeId);
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      <div className="person">
+                        {e && <Avatar employee={e} />}
+                        <strong>{e?.name || "Archived employee"}</strong>
+                      </div>
+                    </td>
+                    <td>
+                      {new Date(t.createdAt).toLocaleDateString("en-ZA", {
+                        day: "numeric",
+                        month: "short",
+                        timeZone: "Africa/Johannesburg",
+                      })}
+                    </td>
+                    <td className="amount">{money(t.amount)}</td>
+                    <td>
+                      <Badge muted={t.status !== "paid"}>
+                        {t.status === "paid" ? "Confirmed" : t.status}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Link className="reference" href={`/payment/${t.id}`}>
+                        {t.id}
+                      </Link>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {rows.length === 0 && (
+            <Empty>No transactions match your filters.</Empty>
+          )}
+        </div>
+        <div className="table-foot">
+          {Math.min(rows.length, compact ? 5 : rows.length)} of {rows.length}{" "}
+          transactions <span>Payments received by {state.restaurant.name}</span>
+        </div>
+      </section>
+    </>
+  );
 }
-

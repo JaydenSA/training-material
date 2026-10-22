@@ -1,0 +1,248 @@
+import { test, expect } from "@playwright/test";
+import { PGlite } from "@electric-sql/pglite";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import {
+  readWorkspace,
+  mutateWorkspace,
+  readPublicProfile,
+  type SQLClient,
+  type Transaction,
+} from "../src/lib/db/workspace-repository";
+import {
+  mutationSchema,
+  deriveCommands,
+  type WorkspaceCommand,
+} from "../src/lib/workspace-contract";
+let db: PGlite;
+let client: SQLClient;
+let transaction: Transaction;
+test.beforeAll(async () => {
+  db = new PGlite();
+  await db.waitReady;
+  for (const file of readdirSync("drizzle")
+    .filter((f) => f.endsWith(".sql"))
+    .sort())
+    await db.exec(readFileSync(join("drizzle", file), "utf8"));
+  client = {
+    query: async (text, values) => ({
+      rows: (await db.query<Record<string, unknown>>(text, values)).rows,
+    }),
+  };
+  transaction = (fn) =>
+    db.transaction((tx) =>
+      fn({
+        query: async (text, values) => ({
+          rows: (await tx.query<Record<string, unknown>>(text, values)).rows,
+        }),
+      }),
+    );
+});
+test.afterAll(async () => {
+  await db?.close();
+});
+test.beforeEach(async () => {
+  await db.exec("TRUNCATE restaurants CASCADE");
+});
+const mutate = (
+  org: string,
+  version: number,
+  commands: WorkspaceCommand[],
+  requestId = randomUUID(),
+) =>
+  mutateWorkspace(transaction, org, "test_actor", {
+    version,
+    commands,
+    requestId,
+  });
+const create = (org: string) =>
+  mutate(org, 0, [
+    {
+      type: "restaurant.save",
+      name: org,
+      email: "owner@example.com",
+      city: "Cape Town",
+    },
+  ]);
+const staff = (id: string): WorkspaceCommand => ({
+  type: "employee.create",
+  id,
+  name: "Test Employee",
+  role: "Waiter",
+  bio: "Hello",
+  color: "#e3eee4",
+});
+test("tenant isolation blocks cross-restaurant reads, writes and foreign keys", async () => {
+  const a = await create("org_A");
+  await create("org_B");
+  const employeeId = randomUUID();
+  await mutate("org_A", a.version, [staff(employeeId)]);
+  expect((await readWorkspace(client, "org_B")).state?.employees).toEqual([]);
+  await expect(
+    mutate("org_B", 1, [{ type: "employee.archive", id: employeeId }]),
+  ).rejects.toMatchObject({ status: 404 });
+  const b = (
+    await client.query("SELECT id FROM restaurants WHERE clerk_org_id=$1", [
+      "org_B",
+    ])
+  ).rows[0];
+  await expect(
+    client.query(
+      "INSERT INTO tags(code,restaurant_id,employee_id,format) VALUES('BAD-CROSS',$1,$2,'NFC card')",
+      [b.id, employeeId],
+    ),
+  ).rejects.toMatchObject({ code: "23503" });
+  expect(
+    (await readWorkspace(client, "org_A")).state?.employees[0].deletedAt,
+  ).toBeNull();
+});
+test("archival suspends links, retains transactions and restores without reactivating tags", async () => {
+  await create("org_A");
+  const id = randomUUID();
+  await mutate("org_A", 1, [
+    staff(id),
+    {
+      type: "tag.create",
+      code: "TEST-001",
+      employeeId: id,
+      format: "NFC card",
+    },
+  ]);
+  const restaurant = (
+    await client.query("SELECT id FROM restaurants WHERE clerk_org_id=$1", [
+      "org_A",
+    ])
+  ).rows[0];
+  await client.query(
+    "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,rating,rated_at,review) VALUES($1,$2,5000,'paid','private-hash',4,now(),'Friendly and attentive service.')",
+    [restaurant.id, id],
+  );
+  const publicState = await readPublicProfile(client, { code: "TEST-001" });
+  expect(publicState?.tips).toEqual([]);
+  expect(publicState?.restaurant.email).toBe("");
+  expect(publicState?.employees[0].ratingSummary).toEqual({
+    count: 1,
+    average: 4,
+  });
+  const archived = await mutate("org_A", 2, [{ type: "employee.archive", id }]);
+  expect(archived.state?.tags[0].status).toBe("suspended");
+  expect(archived.state?.tips).toHaveLength(1);
+  expect(archived.state?.tips[0].review).toBe("Friendly and attentive service.");
+  expect(await readPublicProfile(client, { code: "TEST-001" })).toBeNull();
+  await mutate("org_A", 3, [{ type: "employee.restore", id }]);
+  expect(await readPublicProfile(client, { code: "TEST-001" })).toBeNull();
+  await mutate("org_A", 4, [
+    { type: "tag.status", code: "TEST-001", status: "active" },
+  ]);
+  expect(await readPublicProfile(client, { code: "TEST-001" })).not.toBeNull();
+});
+test("retries are idempotent and stale versions cannot overwrite changes", async () => {
+  await create("org_A");
+  const id = randomUUID();
+  const requestId = randomUUID();
+  const commands = [staff(id)];
+  const first = await mutate("org_A", 1, commands, requestId);
+  const retry = await mutate("org_A", 1, commands, requestId);
+  expect(retry.version).toBe(first.version);
+  expect(retry.state?.employees).toHaveLength(1);
+  await expect(
+    mutate("org_A", 1, [{ type: "employee.archive", id }]),
+  ).rejects.toMatchObject({ status: 409, code: "version_conflict" });
+  await expect(
+    mutate("org_A", 1, [{ type: "employee.restore", id }], requestId),
+  ).rejects.toMatchObject({ status: 409, code: "idempotency_conflict" });
+  const events = (
+    await client.query("SELECT count(*)::int n FROM audit_events")
+  ).rows[0];
+  expect(events.n).toBe(2);
+});
+test("failed batches roll back every change and preserve the version", async () => {
+  await create("org_A");
+  const id = randomUUID();
+  await expect(
+    mutate("org_A", 1, [
+      staff(id),
+      {
+        type: "tag.create",
+        code: "TEST-FAIL",
+        employeeId: randomUUID(),
+        format: "NFC card",
+      },
+    ]),
+  ).rejects.toMatchObject({ status: 404 });
+  const result = await readWorkspace(client, "org_A");
+  expect(result.version).toBe(1);
+  expect(result.state?.employees).toEqual([]);
+});
+test("payment constraints reject invalid money and unearned ratings", async () => {
+  await create("org_A");
+  const id = randomUUID();
+  await mutate("org_A", 1, [staff(id)]);
+  const restaurant = (await client.query("SELECT id FROM restaurants")).rows[0];
+  await expect(client.query(
+    "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,review) VALUES($1,$2,1000,'paid','hash','Review without stars')",
+    [restaurant.id, id],
+  )).rejects.toMatchObject({ code: "23514" });
+  await expect(client.query(
+    "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,rating,rated_at,review) VALUES($1,$2,1000,'paid','hash',5,now(),$3)",
+    [restaurant.id, id, "x".repeat(1001)],
+  )).rejects.toMatchObject({ code: "23514" });
+  await expect(
+    client.query(
+      "INSERT INTO tips(restaurant_id,employee_id,amount_cents,receipt_token_hash) VALUES($1,$2,-1,'hash')",
+      [restaurant.id, id],
+    ),
+  ).rejects.toMatchObject({ code: "23514" });
+  await expect(
+    client.query(
+      "INSERT INTO tips(restaurant_id,employee_id,amount_cents,receipt_token_hash,rating,rated_at) VALUES($1,$2,1000,'hash',5,now())",
+      [restaurant.id, id],
+    ),
+  ).rejects.toMatchObject({ code: "23514" });
+  const state = (await readWorkspace(client, "org_A")).state!;
+  expect(() =>
+    deriveCommands(state, {
+      ...state,
+      tips: [
+        {
+          id: "fake",
+          employeeId: id,
+          amount: 1000,
+          status: "paid",
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    }),
+  ).toThrow("controlled by the server");
+});
+test("hardware drafts use server prices and requests reject injected fields", async () => {
+  await create("org_A");
+  const result = await mutate("org_A", 1, [
+    {
+      type: "order.create",
+      id: randomUUID(),
+      product: "Personal NFC card",
+      quantity: 2,
+    },
+  ]);
+  expect(result.state?.orders[0].amount).toBe(15800);
+  expect(
+    mutationSchema.safeParse({
+      requestId: randomUUID(),
+      version: 2,
+      commands: [
+        {
+          type: "order.create",
+          id: randomUUID(),
+          product: "Personal NFC card",
+          quantity: 1,
+          amount: 1,
+        },
+      ],
+    }).success,
+  ).toBe(false);
+  expect(
+    (await client.query("SELECT status FROM hardware_orders")).rows[0].status,
+  ).toBe("draft");
+});

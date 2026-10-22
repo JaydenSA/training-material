@@ -1,119 +1,120 @@
-# Tipit — restaurant tipping demo
+# Tipit
 
-A restaurant-only tipping SaaS prototype built by adapting the supplied Next.js starter. Original source is preserved in `starter-reference/` and excluded from the active app and type checks. Branding uses the supplied Tipit screenshots; no additional design attachment was present.
+Restaurant-only cashless tipping, employee ratings, and a management dashboard. Next.js 15, React 19, TypeScript, Tailwind CSS, Clerk, Neon PostgreSQL storage, an offline demo, and prepared Yoco integrations.
 
-## Start the client demo
+## Run
 
 ```sh
 pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3000. No environment file, API keys, database, or login is required. npm can also install and run the package scripts; pnpm-lock.yaml is the maintained lockfile.
+Development defaults to http://localhost:3000. A production preview uses `pnpm build` followed by `pnpm start --port 3001`. Stop a running server before rebuilding its output directory.
 
-- `/` — marketing site
-- `/dashboard` — restaurant overview
-- `/dashboard/employees` — add, edit, archive, and restore staff
-- `/dashboard/tips` — search, status/date filters, and CSV export
-- `/dashboard/ratings` — individual ratings
-- `/dashboard/tags` — create links, generate/download actual QR SVGs, suspend/delete tags
-- `/dashboard/hardware` — catalogue and local demo order history
-- `/dashboard/settings` — restaurant details, payment/billing previews, reset
-- `/r/the-green-table` — public staff directory
-- `/t/GT-001` — active Sarah tipping link
-- `/t/GT-004` — suspended link example
-- `/sign-in`, `/sign-up`, `/onboarding`, `/account` — access and setup screens
+No credentials are needed for the demo. With Clerk and DATABASE_URL configured, restaurant data persists in Neon and is isolated by restaurant workspace. Payments and subscriptions remain disabled; hardware selections are unpaid drafts. Without database configuration, the browser demo remains available.
+
+## Pages
+
+- `/` — restaurant landing page
 - `/pricing`, `/how-it-works`, `/help`, `/privacy`, `/terms`
+- `/sign-in`, `/sign-up`, `/account`, `/onboarding`
+- `/dashboard` — restaurant overview
+- `/dashboard/employees` and `/dashboard/employees/[id]` — staff management
+- `/dashboard/tips` — transactions, filters, CSV export
+- `/dashboard/ratings` — employee ratings
+- `/dashboard/tags` — QR/NFC links, QR downloads, activation and suspension
+- `/dashboard/hardware` — demo catalogue and order history
+- `/dashboard/settings` — restaurant details and demo reset
+- `/t/[code]` — permanent QR/NFC destination
+- `/r/[restaurantSlug]/[employeeCode]` — individual employee tipping page
+- `/payment/[reference]` — simulated payment result and optional rating
 
-## Suggested five-minute demo
+The public Meet the team directory has been removed. `/r/[restaurantSlug]` returns 404. Individual employee pages remain available for tipping. Unimplemented `/leaderboard`, `/admin`, and unknown routes also return 404.
 
-1. Open the restaurant dashboard and review totals and employee cards.
-2. Open `/t/GT-001`, choose R50, and continue to simulated checkout.
-3. Simulate success and submit an optional employee rating.
-4. Open the transaction dashboard to see the new tip; reload to show persistence.
-5. Add an employee, create their tag, and download its QR code.
-6. Archive Sarah and reopen `/t/GT-001` to demonstrate the inactive link.
-7. Show hardware orders, then reset via Settings → Demo controls.
+## Five-minute demo
 
-All changes are stored under `tipit-demo-v1` in localStorage in the current browser and origin. They are not shared across devices, private sessions, or different localhost/LAN/deployed URLs. The default employees and tags are recreated independently in another browser. A phone scanning a newly created custom employee link will not see that employee without shared server storage. Use the seeded GT-001/002/003 links for cross-device demonstrations. NFC tags store the same URL as the QR code; NFC programming itself requires your hardware tooling. For scanning from a phone use an accessible HTTPS deployment or your computer's LAN address, not localhost. No deployment has been performed.
+1. Open the dashboard and review sample tips and ratings.
+2. Visit `/t/GT-001`, choose an amount, simulate success, and submit a rating.
+3. Check the new tip in the dashboard and export the transaction CSV.
+4. Add an employee, create a tag, and download its QR code.
+5. Archive Sarah and reopen `/t/GT-001`: the tag is inactive. Restore the employee and explicitly reactivate the tag if needed.
+6. Preview hardware orders, then reset in Settings → Demo controls.
 
-## Agreed business rules
+Changes persist in localStorage under `tipit-demo-v1`, per browser and origin. They do not sync across devices. Use the seeded GT-001/002/003 links for cross-device demos; custom employee links need shared backend storage. GT-004 starts suspended. NFC hardware stores the same URL as its QR code and requires separate programming tooling. A phone needs a LAN-accessible or deployed URL, not localhost.
 
-- Restaurants only. Each restaurant receives payments through its own Yoco merchant account.
-- Each tip is attributed to one employee; processing fees are the restaurant's responsibility.
-- Tipit does not handle employee distributions, payroll, employee balances, or payouts.
-- Monthly subscriptions and separate hardware sales. Displayed prices are illustrative.
-- Employees have profiles without login accounts. Owners/managers have dashboard access.
-- Optional ratings after confirmed tips; one rating per tip. Public profiles, no launch leaderboard.
-- Employee soft deletion disables tipping and suspends tags. Restoring a profile does not reactivate tags.
-- Tags retain historical assignments and are never silently reassigned to another employee.
-- Financial records are retained; operational soft deletion is distinct from legally required anonymisation/retention.
+## Business rules
 
-## API and authentication configuration
+Restaurants receive payments into their own Yoco accounts and absorb processing fees. Tips belong to individual employees. Restaurant management handles employee distribution outside Tipit; there are no employee wallets, balances, payroll, or payout features.
 
-Copy `.env.example` to `.env.local`. Do not commit secrets. Restart Next.js after environment changes.
+Owners/managers authenticate; employees do not need accounts at launch. Ratings are optional after confirmed tips, once per tip. Operational records use soft deletion. Archiving an employee suspends their tags and preserves historical transactions. Tags are never silently reassigned.
 
-### Clerk (implemented optional authentication)
+Revenue is monthly restaurant subscriptions plus separate hardware sales. Current prices are illustrative. Legal pages are drafts for review.
 
-Set `NEXT_PUBLIC_AUTH_MODE=clerk`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, and `CLERK_SECRET_KEY` to enable the Clerk provider and real SignIn, SignUp, and UserProfile components. Middleware protects dashboard, onboarding, and account routes. If Clerk mode is explicitly selected but either key is missing, requests fail closed rather than silently bypassing authentication. Leave mode as `demo` for client presentations without keys.
+## Configuration
 
-Clerk authentication alone does NOT switch the restaurant workspace to live storage. It remains explicitly labelled sample data. Before serving actual restaurant data, enable Organizations, configure owner/admin and manager roles, map each restaurant to its Clerk organization, and use `requireRestaurantAccess()` in every tenant repository. Employees must remain separate database records. The helper resolves the organization from the verified session, not from client input.
+Use `.env.example` as a configuration reference. Never commit keys or paste them into chat. Restart development after configuration changes; rebuild production previews when public configuration or Clerk keys change.
 
-### PostgreSQL / Drizzle (prepared, not connected to the demo UI)
+### Clerk
 
-`src/lib/db/schema.ts` defines restaurants, employees, tags, tips, webhook events, subscriptions, hardware orders, and audit events. `getDatabase()` opens a pooled PostgreSQL connection lazily. Set a pooled `DATABASE_URL` with provider-required TLS settings, then run:
+The selected existing development application is `app_3L2x6Mk68lVublP0QLpMqiJAhwp` (TipIt). Do not run `clerk init` or create a replacement application. The local application link and development key pull have been verified with Clerk doctor. No users were created by the agent; production is not configured.
+
+For another local checkout, authenticate in your host terminal, then:
 
 ```sh
-pnpm db:generate
-pnpm db:migrate
+pnpm dlx clerk@latest auth login
+pnpm dlx clerk@latest link --app app_3L2x6Mk68lVublP0QLpMqiJAhwp
+pnpm dlx clerk@latest env pull
+pnpm dlx clerk@latest doctor
 ```
 
-No migrations are applied automatically. The browser demo deliberately does not write to a connected database. Implement tenant-scoped repositories and database constraints (amount/rating bounds, status transitions, same-restaurant employee/tag associations) before using this schema for live records. Add transactional event deduplication, access tests, and retention processes. Store references to merchant credentials in a server secret store, not plaintext merchant keys in public records.
+Authentication modes:
 
-### Yoco (server adapter prepared; real payments intentionally disabled)
+- `NEXT_PUBLIC_AUTH_MODE=auto` (default): activate Clerk when both keys exist, otherwise present the demo.
+- `clerk`: require keys and fail closed if configuration is incomplete.
+- `demo`: explicitly use offline demo access, even with keys configured.
 
-`src/lib/integrations/yoco.ts` contains a server-only hosted checkout adapter with cents, ZAR, attribution metadata, idempotency keys, timeout handling, and validated redirect URL. It also verifies signed webhook bodies with timestamp tolerance and constant-time comparisons. The adapter requires a merchant key resolved specifically for the restaurant.
+Clerk protects dashboard, account, and onboarding routes. Guest tipping stays public. The profile menu shows the actual signed-in user. The connected database stores restaurant data; real payment processing remains a separate integration.
 
-`POST /api/checkout` currently validates requests and returns only simulated checkout references. It NEVER calls Yoco. `TIPIT_MODE=live` returns 503 rather than treating browser data as financial truth. `/api/webhooks/yoco` returns 503 until durable webhook processing is implemented; it never falsely acknowledges payment events. `/api/integrations` describes the actual demo capabilities without exposing credentials.
+### PostgreSQL and restaurant workspaces
 
-Adding keys is not sufficient to accept money. Complete these steps before enabling live payments:
+Neon is connected and the initial nine-table migration has been applied without seeding sample data. Clerk Organizations is enabled. Sign in, select/create a restaurant workspace, and complete restaurant setup. Employees, tags, restaurant details and hardware draft orders persist in the database. Public tipping pages read active employee profiles without exposing private transactions.
 
-1. Confirm the supported multi-merchant onboarding/domain arrangement with Yoco.
-2. Resolve and verify the active restaurant/employee/tag from the database on the server.
-3. Persist a pending tip and durable retry/idempotency record before calling the checkout adapter.
-4. Register a merchant-specific webhook and securely resolve its signing secret.
-5. Verify the raw body, validate provider references, restaurant, amount, currency, and payment state; update the tip and deduplicate the event in one database transaction.
-6. Expose receipt status using an unguessable receipt token, not a public transaction identifier alone.
-7. Replace browser simulated outcomes and ratings with server-verified receipt/status/rating endpoints.
-8. Implement refund reconciliation and operational alerts, then test against Yoco sandbox.
+See [Database setup and access rules](docs/database.md) for the schema, commands, roles, migration lifecycle, storage modes and testing. `pnpm db:check` verifies connectivity, `pnpm db:migrate` applies reviewed migrations, and `pnpm test:db` runs isolated PostgreSQL repository tests.
 
-Browser redirects must never mark a real payment successful. A single platform Yoco key must never receive payments intended for different restaurant accounts.
+Use `TIPIT_STORAGE=demo` and `NEXT_PUBLIC_AUTH_MODE=demo` together for the offline sample workspace. Database connection failures never silently switch to sample data. Actual payments, ratings and subscription status remain provider-controlled and cannot be edited by browser workspace commands.
 
-Official references used:
+For client demos while Clerk and Neon remain connected, open `/demo/dashboard`. This public sandbox needs no sign-in, stores sample data only in the browser, and keeps navigation and QR links under `/demo`. `/dashboard` and workspace APIs retain their existing authentication checks.
+
+### Yoco boundaries
+
+`POST /api/checkout` validates amounts and creates simulated references only, independently of database storage. Keep `TIPIT_MODE=demo` until live payment processing is implemented; `TIPIT_MODE=live` returns 503. Connected public profiles open `/simulation/payment/<reference>` with a browser-session snapshot. Simulated outcomes and ratings are never written to Neon. `/api/webhooks/yoco` returns 503 instead of acknowledging unpersisted financial events. No payments are sent to Yoco by this demo.
+
+Before live payments: validate Yoco's multi-restaurant connection arrangement; resolve restaurant/employee/tag server-side; store a pending tip and idempotency record; call the adapter with that restaurant's authorized secret; verify webhook signatures and amount/currency/provider references; update the tip and deduplicate the event transactionally; protect receipts with unguessable tokens; replace simulated outcomes and ratings with server endpoints. Browser redirects must never confirm a real payment.
+
+Provider references:
 - https://developer.yoco.com/guides/online-payments/accepting-a-payment
 - https://developer.yoco.com/api-reference/checkout-api/checkout/create-checkout
 - https://developer.yoco.com/guides/online-payments/webhooks/verifying-the-events
 
-### Subscription billing and hardware
-
-The subscription provider is still undecided. Billing buttons are explicitly previews; hardware creates local demo orders only. Live recurring billing, checkout, addresses, shipping, inventory, and fulfilment require the selected providers and commercial terms. No API secrets are collected in browser settings.
-
-## Verification
+## Checks
 
 ```sh
 pnpm typecheck
 pnpm lint
 pnpm build
-# After building, with Microsoft Edge installed (tests start/reuse port 3001):
+```
+
+Playwright uses installed Microsoft Edge and starts/reuses a production preview on port 3001. The default seven-test suite expects a build with demo authentication. For the configured Clerk build, run the read-only forms/redirect/directory-removal checks in PowerShell:
+
+```powershell
+$env:CLERK_TEST_LIVE = '1'
 pnpm test:e2e
 ```
 
-Playwright covers successful tipping/rating and persistence, employee archive/tag suspension, staff/tag creation and actual QR generation, hardware demo ordering and reset, failed payment/rating restrictions, invalid checkout amounts, and mobile overflow/navigation. Default browser is installed Microsoft Edge; change `channel` in playwright.config.ts if needed.
+To run the demo suite, build with `NEXT_PUBLIC_AUTH_MODE=demo`, unset `CLERK_TEST_LIVE`, and run `pnpm test:e2e`. No tests create users in the existing Clerk application.
 
-## Production boundaries
+## Cleanup
 
-This is a client-review demo with integration foundations, not a production payment platform. Final legal copy, subscription pricing, employee publication permissions, fraud controls, shared tenant persistence, merchant onboarding, support operations, and live payment verification require completion before launch. `/admin` deliberately exposes no privileged operations. `/leaderboard` is a deferred-feature page. No real customer or card data should be entered in the demo.
+Removed unused AI/chat SDKs, alternate authentication/theming packages, unused form/toast/clipboard/video utilities, unused typography packages, 52 unreferenced starter images, stale asset permissions/configuration, directory controls, and obsolete starter references. Retained React DOM as a required runtime peer. Shared UI is in `src/components/ui.tsx` to avoid circular page imports. Source is formatted for maintenance. The source license is preserved.
 
-#   t r a i n i n g - m a t e r i a l 
- 
- 
+
