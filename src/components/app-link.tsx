@@ -14,6 +14,7 @@ export default function Link({
     typeof href === "string" &&
     href.startsWith("/") &&
     !href.startsWith("//") &&
+    !/^\/(sign-in|sign-up)(?:[/?#]|$)/.test(href) &&
     !href.startsWith("/demo")
       ? `/demo${href}`
       : href;

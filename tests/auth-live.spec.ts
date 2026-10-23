@@ -327,12 +327,77 @@ test("real Clerk sign-in and sign-up render, with visible navigation controls", 
   await page.getByRole("link", { name: "Sign in", exact: true }).click();
   await expect(page.locator(".cl-signIn-root")).toBeVisible({ timeout: 30000 });
   await expect(page.locator('input[name="identifier"]')).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Explore demo", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Try onboarding demo", exact: true }),
+  ).toBeVisible();
   await page.screenshot({
     path: "test-results/clerk-sign-in.png",
     fullPage: true,
   });
   await page.goto("/sign-up");
   await expect(page.locator(".cl-signUp-root")).toBeVisible({ timeout: 30000 });
+  await expect(
+    page.getByRole("link", { name: "Explore demo", exact: true }),
+  ).toBeVisible();
+  await page.goto("/demo/dashboard");
+  await page.getByRole("link", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/sign-in(?:[?#]|$)/);
+  await expect(page.locator(".cl-signIn-root")).toBeVisible();
+  await page.goto("/demo/sign-up");
+  await expect(page).toHaveURL(/\/sign-up(?:[?#]|$)/);
+  await expect(page.locator(".cl-signUp-root")).toBeVisible();
+});
+
+test("new restaurant onboarding demo starts empty and never writes to connected storage", async ({
+  page,
+}) => {
+  const writes: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/workspace")) writes.push(request.method());
+  });
+  await page.goto("/sign-up");
+  await page
+    .getByRole("link", { name: "Try onboarding demo", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Set up your restaurant demo." }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Restaurant name", { exact: true })).toHaveValue(
+    "",
+  );
+  await page
+    .getByLabel("Restaurant name", { exact: true })
+    .fill("First Table Demo");
+  await page
+    .getByLabel("Contact email", { exact: true })
+    .fill("owner@example.com");
+  await page.getByLabel("City", { exact: true }).fill("Durban");
+  await page
+    .getByRole("button", { name: "Create demo restaurant", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/demo\/dashboard$/);
+  await expect(page.locator(".workspace")).toContainText("First Table Demo");
+  const snapshot = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("tipit-demo-v1") || "{}"),
+  );
+  expect(snapshot).toMatchObject({
+    restaurant: {
+      name: "First Table Demo",
+      email: "owner@example.com",
+      city: "Durban",
+    },
+    employees: [],
+    tags: [],
+    tips: [],
+    orders: [],
+    onboarded: true,
+  });
+  await page.reload();
+  await expect(page.locator(".workspace")).toContainText("First Table Demo");
+  expect(writes).toEqual([]);
 });
 test("signed-out visitors are redirected from private routes and can still tip", async ({
   page,

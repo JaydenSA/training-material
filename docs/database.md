@@ -10,6 +10,12 @@ The Clerk custom role `org:manager` is configured in the default role set. It pe
 
 ## Storage modes
 
+### First-time account setup
+
+Use the canonical `/sign-up` page for real registration, or `/sign-in` for an existing account. Clerk handles credentials, email verification and any organization task. A new owner chooses or creates a restaurant workspace and completes the restaurant details form; the first saved workspace has no sample employees, tips, tags or orders. Returning owners load their existing restaurant. Demo buttons are additional options, not an authentication replacement.
+
+`/demo/onboarding` previews that empty-restaurant experience entirely in browser storage. Submitting replaces the local sample workspace, never Neon or Clerk records. Demo links to sign-in/sign-up leave the demo prefix; legacy demo auth URLs redirect to the canonical account pages.
+
 - `TIPIT_STORAGE=auto`: use PostgreSQL if DATABASE_URL exists, otherwise use browser-local demo storage.
 - `TIPIT_STORAGE=database`: require DATABASE_URL. Missing configuration blocks the workspace.
 - `TIPIT_STORAGE=demo`: explicitly use the original browser-local sample workspace even if a database is configured.
