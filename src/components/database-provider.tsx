@@ -338,7 +338,7 @@ function RestaurantSetup({
       city: String(data.get("city")),
     });
     setBusy(false);
-    if (ok) router.push("/dashboard");
+    if (ok) router.push("/dashboard/setup");
   }
   return (
     <div className="access-wrap">

@@ -7,6 +7,8 @@ import { useState } from "react";
 import { useWorkspace } from "@/components/workspace-context";
 import { useSimulatedReviews } from "@/hooks/use-simulated-reviews";
 import { Badge, Heading } from "@/components/ui";
+import { ReviewModeration, ReviewText } from "@/components/review-moderation";
+import { moderationStatus } from "@/lib/moderation";
 
 export function RatingsTable() {
   const { state, mode } = useWorkspace();
@@ -22,6 +24,8 @@ export function RatingsTable() {
   const [from, setFrom] = useState("");
   const [until, setUntil] = useState("");
   const [search, setSearch] = useState("");
+  const [moderation, setModeration] = useState("");
+  const [selected, setSelected] = useState<string | null>(null);
   const rows = [
     ...state.tips
       .filter((tip) => tip.status === "paid" && tip.rating)
@@ -60,7 +64,11 @@ export function RatingsTable() {
       matchesWrittenReview &&
       matchesSource &&
       matchesDateRange &&
-      matchesSearch
+      matchesSearch &&
+      (!moderation ||
+        moderationStatus(
+          state.moderations?.find((item) => item.tipId === tip.id),
+        ) === moderation)
     );
   });
   const invalidDates = !!from && !!until && from > until;
@@ -72,6 +80,7 @@ export function RatingsTable() {
     setFrom("");
     setUntil("");
     setSearch("");
+    setModeration("");
   }
   return (
     <>
@@ -110,6 +119,18 @@ export function RatingsTable() {
               ...[5, 4, 3, 2, 1].map((value) => ({
                 value: String(value),
                 label: `${value} ${value === 1 ? "star" : "stars"}`,
+              })),
+            ]}
+          />
+          <FilterSelect
+            label="Moderation status"
+            value={moderation}
+            onChange={(event) => setModeration(event.target.value)}
+            options={[
+              { value: "", label: "All review states" },
+              ...["Visible", "Flagged", "Hidden"].map((value) => ({
+                value,
+                label: value,
               })),
             ]}
           />
@@ -198,10 +219,14 @@ export function RatingsTable() {
               key: "review",
               header: "Written review",
               className: "review-text",
-              cell: (tip) =>
-                tip.review?.trim() || (
-                  <span className="muted">No written review</span>
-                ),
+              cell: (tip) => (
+                <ReviewText
+                  text={tip.review?.trim()}
+                  event={state.moderations?.find(
+                    (item) => item.tipId === tip.id,
+                  )}
+                />
+              ),
             },
             {
               key: "date",
@@ -219,9 +244,38 @@ export function RatingsTable() {
                 <Badge muted={tip.source !== "Verified"}>{tip.source}</Badge>
               ),
             },
+            {
+              key: "moderation",
+              header: "Moderation",
+              cell: (tip) => (
+                <>
+                  <Badge muted>
+                    {moderationStatus(
+                      state.moderations?.find((item) => item.tipId === tip.id),
+                    )}
+                  </Badge>
+                  {tip.review?.trim() && tip.source !== "Simulated" && (
+                    <button
+                      className="text-button"
+                      onClick={() => setSelected(tip.id)}
+                      aria-label={`Moderate review ${tip.id}`}
+                    >
+                      Moderate
+                    </button>
+                  )}
+                </>
+              ),
+            },
           ]}
         />
       </section>
+      {selected && (
+        <ReviewModeration
+          key={selected}
+          tipId={selected}
+          onClose={() => setSelected(null)}
+        />
+      )}
       {mode === "database" && (
         <p>
           Simulated reviews are saved in this browser only and do not affect

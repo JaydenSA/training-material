@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
 import { useWorkspace } from "@/components/workspace-context";
 import { Badge, Heading } from "@/components/ui";
+import { BulkTags } from "@/components/dashboard/bulk-tags";
 
 export function Tags() {
   const { state, update } = useWorkspace();
@@ -40,6 +41,7 @@ export function Tags() {
         Create permanent links for QR codes and NFC cards. Suspended or deleted
         tags cannot accept tips.
       </Heading>
+      <BulkTags />
       <section className="panel pad">
         <h3>Create a tipping link</h3>
         <form onSubmit={create} className="inline-form">
@@ -204,7 +206,7 @@ export function Tags() {
     </>
   );
 }
-function QRCode({ code }: { code: string }) {
+export function QRCode({ code }: { code: string }) {
   const [svg, setSvg] = useState("");
   const [error, setError] = useState(false);
   useEffect(() => {

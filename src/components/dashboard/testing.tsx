@@ -6,6 +6,10 @@ import type { TestingSnapshot, TestResult } from "@/lib/testing/types";
 
 const coverage = [
   [
+    "Management tools",
+    "Review moderation, unchanged ratings and original text, owner/manager permissions, bulk tag rollback and QR ZIP downloads, operational alerts and employee comparisons.",
+  ],
+  [
     "Restaurant workspace",
     "Setup checklist, settings, employee create/edit/archive/restore, workspace version conflicts and tenant isolation.",
   ],

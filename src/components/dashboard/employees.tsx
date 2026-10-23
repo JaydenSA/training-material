@@ -5,6 +5,7 @@ import { useWorkspace } from "@/components/workspace-context";
 import { Employee, money, ratingFor } from "@/lib/demo";
 import { Avatar, Badge, Empty, Heading } from "@/components/ui";
 import { EmployeeInsights } from "@/components/dashboard/employee-insights";
+import { EmployeeFields } from "@/components/employee-fields";
 
 export function Employees({ id }: { id?: string }) {
   const { state, update } = useWorkspace();
@@ -220,32 +221,7 @@ export function Employees({ id }: { id?: string }) {
         <section className="panel pad">
           <h3>Add a team member</h3>
           <form onSubmit={save} className="employee-form">
-            <label>
-              Full name
-              <input
-                name="name"
-                required
-                maxLength={80}
-                placeholder="e.g. Lerato Ndlovu"
-              />
-            </label>
-            <label>
-              Role
-              <input
-                name="role"
-                required
-                maxLength={60}
-                placeholder="e.g. Waiter"
-              />
-            </label>
-            <label>
-              Introduction
-              <textarea
-                name="bio"
-                maxLength={240}
-                placeholder="A little about this team member"
-              />
-            </label>
+            <EmployeeFields />
             <div className="actions">
               <button className="button">Add employee</button>
               <button

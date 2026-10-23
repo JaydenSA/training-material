@@ -26,6 +26,7 @@ export type Tag = {
   status: "active" | "suspended" | "deleted";
 };
 export type DemoState = {
+  moderations?: import("./moderation").ModerationEvent[];
   activity?: ActivityEvent[];
   restaurant: { name: string; slug: string; email: string; city: string };
   employees: Employee[];

@@ -1,7 +1,7 @@
 "use client";
 import { ReviewForm, ReviewConfirmation } from "@/components/review-form";
 import Link from "@/components/app-link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useWorkspace } from "@/components/workspace-context";
 import { money } from "@/lib/demo";
@@ -10,6 +10,7 @@ import { Badge, DemoNotice, Header, Heading, Logo } from "@/components/ui";
 export function DemoPayment({ id }: { id: string }) {
   const { state, update, mode } = useWorkspace();
   const simulation = usePathname().startsWith("/simulation/");
+  const setup = useSearchParams().get("setup");
   const tip = state.tips.find((t) => t.id === id);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
@@ -121,6 +122,15 @@ export function DemoPayment({ id }: { id: string }) {
           </p>
         )}
         <div className="payment-links">
+          {simulation && ["demo", "restaurant"].includes(setup || "") && (
+            <Link
+              href={
+                setup === "demo" ? "/demo/dashboard/setup" : "/dashboard/setup"
+              }
+            >
+              Return to guided setup
+            </Link>
+          )}
           <Link href={`/r/${state.restaurant.slug}/${tip.employeeId}`}>
             Back to employee
           </Link>

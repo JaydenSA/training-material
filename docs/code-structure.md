@@ -40,6 +40,14 @@ Prefer a local component until a pattern is used in multiple places. Add shared 
 
 `src/lib/product-updates.ts` stores the dated product batches displayed under **What’s new**. Add entries when shipping user-visible changes; dates describe development batches rather than deployment verification.
 
+## Guided setup
+
+`dashboard/guided-setup.tsx` provides the four-step first-tip journey. Employee fields are shared with the Employees creation form through `employee-fields.tsx`; tag QR rendering reuses `QRCode`. Normal workspace mutations create employees and tags. Browser progress is scoped by storage mode and restaurant slug, and completion is re-evaluated against active employee/tag records. Practice checkout explicitly sends `demo: true` and stores its receipt using the existing simulation helpers, never workspace payment mutations. The simulated receipt offers a fixed return link to the correct guide. New restaurant forms continue to this route; existing accounts can reopen it from the sidebar.
+
+## Management features
+
+`review-moderation.tsx` shares hidden-text presentation between Ratings and employee insights and provides a reasoned action/history panel. `moderation.ts` defines event types/validation; `db/moderation-repository.ts` enforces tenant and owner rules independently of the UI. `bulk-tags.tsx` uses existing workspace mutations for batches and lazily loads QR/ZIP generation (`fflate`) for downloads. `operations.ts` builds alerts from a redacted snapshot; its repository/API collect scoped counts, and `dashboard/alerts.tsx` polls only while visible. `comparisons.ts` provides testable employee/period calculations, displayed using shared filters, tables and CSV handling.
+
 ## Formatting and readability
 
 Run `pnpm format` to format the project and `pnpm format:check` to check it without rewriting files. Prettier is pinned as a development dependency and configured in `.prettierrc.json`; `.editorconfig` supplies matching indentation and line-ending settings for editors.

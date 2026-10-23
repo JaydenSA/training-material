@@ -18,6 +18,9 @@ export const activityLabels: Record<string, string> = {
   "tag.status": "Changed tag status",
   "tag.delete": "Deleted tag",
   "order.create": "Created hardware draft",
+  "review.flag": "Flagged review text",
+  "review.hide": "Hid review text",
+  "review.restore": "Restored review text",
 };
 export function demoActivity(
   before: DemoState,
@@ -25,6 +28,9 @@ export function demoActivity(
 ): ActivityEvent[] {
   const changes: { action: string; targetId: string; targetName?: string }[] =
     [];
+  for (const event of after.moderations || [])
+    if (!before.moderations?.some((item) => item.id === event.id))
+      changes.push({ action: `review.${event.action}`, targetId: event.tipId });
   if (JSON.stringify(before.restaurant) !== JSON.stringify(after.restaurant))
     changes.push({
       action: "restaurant.save",

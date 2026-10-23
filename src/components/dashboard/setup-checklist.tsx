@@ -79,7 +79,10 @@ export function SetupChecklist() {
             {completed} of {steps.length} setup steps complete
           </p>
         </div>
-        <Link href="/dashboard/print">Print QR materials</Link>
+        <div className="actions">
+          <Link href="/dashboard/setup">Continue guided setup</Link>
+          <Link href="/dashboard/print">Print QR materials</Link>
+        </div>
       </div>
       <progress
         value={completed}

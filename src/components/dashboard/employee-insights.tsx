@@ -1,4 +1,5 @@
 "use client";
+import { ReviewText } from "@/components/review-moderation";
 import { useState } from "react";
 import Link from "@/components/app-link";
 import { useWorkspace } from "@/components/workspace-context";
@@ -135,7 +136,14 @@ export function EmployeeInsights({ employeeId }: { employeeId: string }) {
               key: "review",
               header: "Review",
               className: "review-text",
-              cell: (tip) => tip.review || "Stars only",
+              cell: (tip) => (
+                <ReviewText
+                  text={tip.review}
+                  event={state.moderations?.find(
+                    (item) => item.tipId === tip.id,
+                  )}
+                />
+              ),
             },
             {
               key: "date",

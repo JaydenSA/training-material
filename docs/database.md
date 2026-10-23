@@ -26,6 +26,18 @@ For an entirely offline demo, set both `TIPIT_STORAGE=demo` and `NEXT_PUBLIC_AUT
 
 ## Data model
 
+### Moderation migration
+
+Migration `0004_review_moderation` adds `review_moderations` as an append-only application event log. Each row records a request UUID, monotonic sequence, restaurant and tip IDs, action, reason, verified actor and timestamp. A composite foreign key prevents cross-restaurant references. Current state is derived from the latest sequence; original `tips.review`, rating and amount are never overwritten. Workspace reads include latest states; the authenticated history endpoint pages through older events. Moderation increments the restaurant version and writes an audit event.
+
+`POST /api/reviews/moderation` requires an authenticated owner/manager and matching organization header. Owners alone can hide/restore; managers can flag. Strict payload validation rejects rating edits and client-supplied roles. Repeated request IDs are idempotent; conflicting reuse is rejected. `GET` returns only that restaurant’s history. Bulk tag creation uses existing validated mutation batches (maximum 20 commands), optimistic versions and atomic rollback.
+
+`GET /api/operations` is management- and organization-scoped. It returns redacted configuration flags, live/test failures from the last 24 hours, pending checkouts older than 30 minutes, and the last processed signed-webhook timestamp. It does not contact a provider or store unverified webhook contents.
+
+### Application tables
+
+The guided setup route uses the same authorized employee/tag mutation commands as the dashboard. Its progress metadata and practice payment snapshots are browser-only and require no schema migration. New restaurant detail saves continue to `/dashboard/setup`; the connected dashboard remains free of seeded sample records. A guide practice tip explicitly uses demo checkout even when payment mode is live and never inserts a database tip.
+
 - `restaurants`: one per Clerk organization; immutable URL slug, version counter and soft deletion.
 - `employees`: staff profiles, publication flag and archive timestamp. Employees have no required login.
 - `tags`: globally unique opaque code, fixed employee assignment, suspension/deletion timestamps.

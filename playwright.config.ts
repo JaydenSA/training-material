@@ -9,12 +9,14 @@ export default defineConfig({
           "**/helpers.spec.ts",
           "**/testing.spec.ts",
           "**/auth-config.spec.ts",
+          "**/management.spec.ts",
         ]
       : [
           "**/demo.spec.ts",
           "**/auth-config.spec.ts",
           "**/helpers.spec.ts",
           "**/testing.spec.ts",
+          "**/management.spec.ts",
         ],
   timeout: 45000,
   workers: 1,

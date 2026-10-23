@@ -48,6 +48,16 @@ Tests use fresh browser storage, demo routes, mocked provider responses and an i
 
 ## Separate integration and manual checks
 
+### Management feature checks
+
+`management.spec.ts` exercises local moderation and unchanged ratings, persisted restoration, bulk creation and ZIP contents, inactive-tag download rejection, comparison filters/exports and explicit demo alerts. It checks signed-out moderation/operational API denial and calculation exclusion of provider tests. Database checks cover owner/manager rules, original preservation, replay safety, cross-restaurant moderation constraints/history, scoped live/test counts and atomic rollback of invalid bulk batches. The Testing console includes these suites automatically.
+
+Apply the moderation migration to each review/deployment database before connected testing. Browser tests use demo fixtures; they do not moderate real reviews or create real tags. Real sign-up verification and Yoco sandbox processing remain interactive checks. No merchant keys were available for a real Yoco run in this batch.
+
+### Guided first-tip journey
+
+The connected browser suite follows blank demo restaurant setup into Guided setup, creates an employee and tag, checks QR availability and its demo URL, confirms the manual page-check step, and starts the practice payment. It asserts `demo: true` on checkout, simulates success, returns to the guide, verifies 4/4 completion after reload, and checks that the restaurant workspace still contains no financial records. Suspending the tag invalidates later setup completion. Demo routes must make no workspace API calls. Physical scanning, real authenticated saves and provider readiness remain separate checks.
+
 ### Authentication and first-time onboarding
 
 The connected browser suite checks that canonical sign-in/sign-up pages render Clerk and additional demo options, demo sign-in links leave the demo area, and legacy demo auth URLs redirect correctly. It walks through `/demo/onboarding`, verifies the new local restaurant has no seeded entities, checks reload persistence and confirms there are no workspace API requests. Repository tests separately verify a first restaurant save produces an empty persisted workspace in isolated PGlite.

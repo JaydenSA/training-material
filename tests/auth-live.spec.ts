@@ -222,7 +222,7 @@ test("public demo dashboard stays isolated from restaurant APIs", async ({
   ).toBeVisible();
   await page
     .locator(".sidebar nav")
-    .getByRole("link", { name: "Employees" })
+    .getByRole("link", { name: "Employees", exact: true })
     .click();
   await expect(page).toHaveURL(/\/demo\/dashboard\/employees$/);
   await expect(page.getByText("Sarah Jacobs").first()).toBeVisible();
@@ -378,7 +378,7 @@ test("new restaurant onboarding demo starts empty and never writes to connected 
   await page
     .getByRole("button", { name: "Create demo restaurant", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/demo\/dashboard$/);
+  await expect(page).toHaveURL(/\/demo\/dashboard\/setup$/);
   await expect(page.locator(".workspace")).toContainText("First Table Demo");
   const snapshot = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("tipit-demo-v1") || "{}"),
@@ -397,6 +397,66 @@ test("new restaurant onboarding demo starts empty and never writes to connected 
   });
   await page.reload();
   await expect(page.locator(".workspace")).toContainText("First Table Demo");
+  await expect(
+    page.getByRole("heading", { name: "Your first tip, step by step." }),
+  ).toBeVisible();
+  await page.getByLabel("Full name", { exact: true }).fill("First Employee");
+  await page.getByLabel("Role", { exact: true }).fill("Waiter");
+  await page
+    .getByRole("button", { name: "Add employee and continue", exact: true })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Create a tag", exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Create tag and continue", exact: true })
+    .click();
+  await expect(
+    page.getByRole("link", { name: "Download QR", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Open tipping page", exact: true }),
+  ).toHaveAttribute("href", /\/demo\/t\/GT-/);
+  await page
+    .getByRole("button", { name: "I checked the employee page", exact: true })
+    .click();
+  const checkout = page.waitForRequest(
+    (request) =>
+      request.url().includes("/api/checkout") && request.method() === "POST",
+  );
+  await page
+    .getByRole("button", { name: "Simulate a R10 tip", exact: true })
+    .click();
+  expect((await checkout).postDataJSON()).toMatchObject({
+    demo: true,
+    amount: 1000,
+  });
+  await expect(page).toHaveURL(/\/simulation\/payment\/demo-.*\?setup=demo$/);
+  await page
+    .getByRole("button", { name: "Simulate successful payment", exact: true })
+    .click();
+  await page
+    .getByRole("link", { name: "Return to guided setup", exact: true })
+    .click();
+  await expect(
+    page.getByRole("region", { name: "Guided setup progress" }),
+  ).toContainText("4 of 4 complete");
+  await page.reload();
+  await expect(
+    page.getByRole("region", { name: "Guided setup progress" }),
+  ).toContainText("4 of 4 complete");
+  const afterPractice = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("tipit-demo-v1") || "{}"),
+  );
+  expect(afterPractice.employees).toHaveLength(1);
+  expect(afterPractice.tags).toHaveLength(1);
+  expect(afterPractice.tips).toEqual([]);
+  await page.goto("/demo/dashboard/tags");
+  await page.getByRole("button", { name: "Suspend", exact: true }).click();
+  await page.goto("/demo/dashboard/setup");
+  await expect(
+    page.getByRole("region", { name: "Guided setup progress" }),
+  ).toContainText("1 of 4 complete");
   expect(writes).toEqual([]);
 });
 test("signed-out visitors are redirected from private routes and can still tip", async ({
