@@ -8,13 +8,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint src tests scripts playwright*.config.ts drizzle.config.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate-database.mjs",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
     "db:check": "node scripts/check-database.mjs",
-    "test:db": "playwright test --config=playwright.db.config.ts"
+    "test:db": "playwright test --config=playwright.db.config.ts",
+    "yoco:webhook": "node scripts/register-yoco-webhook.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.18",
@@ -42,6 +45,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.28",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "prettier": "3.9.10",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

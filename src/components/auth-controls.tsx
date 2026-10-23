@@ -1,7 +1,7 @@
 "use client";
-import Link from "./app-link";
+import Link from "@/components/app-link";
 import { UserButton, useUser, OrganizationSwitcher } from "@clerk/nextjs";
-import { useAuthenticationEnabled } from "./auth-provider";
+import { useAuthenticationEnabled } from "@/components/auth-provider";
 export function AuthControls({ compact = false }: { compact?: boolean }) {
   const enabled = useAuthenticationEnabled();
   if (!enabled)

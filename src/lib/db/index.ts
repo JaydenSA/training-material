@@ -15,7 +15,9 @@ export function getPool() {
       idleTimeoutMillis: 30000,
       statement_timeout: 15000,
     });
-    runtime.tipitPool.on('error',()=>console.error('An idle database connection closed.'));
+    runtime.tipitPool.on("error", () =>
+      console.error("An idle database connection closed."),
+    );
   }
   return runtime.tipitPool;
 }

@@ -1,9 +1,9 @@
 "use client";
-import Link from "./app-link";
+import Link from "@/components/app-link";
 import type { ReactNode } from "react";
 import type { Employee } from "@/lib/demo";
-import { AuthControls } from "./auth-controls";
-import { useDemo } from "./demo-provider";
+import { AuthControls } from "@/components/auth-controls";
+import { useWorkspace } from "@/components/workspace-context";
 export function Logo() {
   return (
     <Link href="/" className="logo">
@@ -69,7 +69,7 @@ export function Empty({ children }: { children: ReactNode }) {
   return <div className="empty">{children}</div>;
 }
 export function DemoNotice() {
-  const { mode } = useDemo();
+  const { mode } = useWorkspace();
   return (
     <div className="demo-notice">
       <span className="dot" />{" "}

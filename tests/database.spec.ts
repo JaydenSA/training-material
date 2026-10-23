@@ -2,7 +2,18 @@ import { test, expect } from "@playwright/test";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHmac } from "node:crypto";
+import {
+  applyYocoEvent,
+  checkoutTarget,
+  prepareCheckout,
+  ratePayment,
+  receipt,
+} from "../src/lib/db/payment-repository";
+import {
+  createYocoCheckout,
+  verifyYocoWebhook,
+} from "../src/lib/integrations/yoco-client";
 import {
   readWorkspace,
   mutateWorkspace,
@@ -73,6 +84,244 @@ const staff = (id: string): WorkspaceCommand => ({
   bio: "Hello",
   color: "#e3eee4",
 });
+
+test("Yoco checkout attribution and retry keys stay bound to one restaurant and receipt", async () => {
+  await create("org_A");
+  await create("org_B");
+  const employeeId = randomUUID();
+  await mutate("org_A", 1, [
+    staff(employeeId),
+    { type: "tag.create", code: "YOCO-001", employeeId, format: "NFC card" },
+  ]);
+  const workspace = (await readWorkspace(client, "org_A")).state!;
+  const input = {
+    amount: 5000,
+    employeeId,
+    restaurantSlug: workspace.restaurant.slug,
+    tagId: "YOCO-001",
+    requestId: randomUUID(),
+    receiptToken: randomUUID(),
+  };
+  const target = await checkoutTarget(client, input);
+  const pending = await prepareCheckout(
+    transaction,
+    input,
+    target.restaurantId,
+    "test",
+  );
+  expect(
+    await prepareCheckout(transaction, input, target.restaurantId, "test"),
+  ).toEqual(pending);
+  expect((await client.query("SELECT id FROM tips")).rows).toHaveLength(1);
+  await expect(
+    prepareCheckout(
+      transaction,
+      { ...input, amount: 6000 },
+      target.restaurantId,
+      "test",
+    ),
+  ).rejects.toMatchObject({ status: 409 });
+  await expect(
+    checkoutTarget(client, {
+      ...input,
+      restaurantSlug: (await readWorkspace(client, "org_B")).state!.restaurant
+        .slug,
+    }),
+  ).rejects.toMatchObject({ status: 404 });
+  await expect(receipt(client, pending.id, randomUUID())).rejects.toMatchObject(
+    { status: 404 },
+  );
+  await expect(
+    ratePayment(transaction, pending.id, input.receiptToken, 5, "Too early"),
+  ).rejects.toMatchObject({ status: 409 });
+  await mutate("org_A", 2, [
+    { type: "tag.status", code: "YOCO-001", status: "suspended" },
+  ]);
+  await expect(checkoutTarget(client, input)).rejects.toMatchObject({
+    status: 404,
+  });
+});
+
+test("Yoco events confirm payments once, enforce financial matches and protect real ratings", async () => {
+  await create("org_A");
+  const employeeId = randomUUID();
+  await mutate("org_A", 1, [staff(employeeId)]);
+  const state = (await readWorkspace(client, "org_A")).state!;
+  const input = {
+    amount: 5000,
+    employeeId,
+    restaurantSlug: state.restaurant.slug,
+    requestId: randomUUID(),
+    receiptToken: randomUUID(),
+  };
+  const target = await checkoutTarget(client, input);
+  await prepareCheckout(transaction, input, target.restaurantId, "test");
+  await client.query(
+    "UPDATE tips SET checkout_id='checkout_test_1' WHERE id=$1",
+    [input.requestId],
+  );
+  const event = {
+    id: "evt_paid",
+    type: "payment.succeeded",
+    payload: {
+      id: "payment_1",
+      amount: 5000,
+      currency: "ZAR",
+      mode: "test",
+      status: "succeeded",
+      metadata: { checkoutId: "checkout_test_1" },
+    },
+  };
+  await expect(
+    applyYocoEvent(transaction, target.restaurantId, {
+      ...event,
+      payload: { ...event.payload, amount: 5001 },
+    }),
+  ).rejects.toMatchObject({ status: 400 });
+  await expect(
+    applyYocoEvent(transaction, target.restaurantId, {
+      ...event,
+      payload: { ...event.payload, mode: "live" },
+    }),
+  ).rejects.toMatchObject({ status: 400 });
+  expect(
+    (await client.query("SELECT id FROM webhook_events")).rows,
+  ).toHaveLength(0);
+  expect(await applyYocoEvent(transaction, target.restaurantId, event)).toEqual(
+    { duplicate: false },
+  );
+  expect(await applyYocoEvent(transaction, target.restaurantId, event)).toEqual(
+    { duplicate: true },
+  );
+  await applyYocoEvent(transaction, target.restaurantId, {
+    ...event,
+    id: "evt_late_failure",
+    type: "payment.failed",
+    payload: { ...event.payload, status: "failed" },
+  });
+  expect(
+    (await receipt(client, input.requestId, input.receiptToken)).status,
+  ).toBe("paid");
+  const reviewed = await ratePayment(
+    transaction,
+    input.requestId,
+    input.receiptToken,
+    5,
+    "Excellent service",
+  );
+  expect(reviewed.review).toBe("Excellent service");
+  await expect(
+    ratePayment(transaction, input.requestId, input.receiptToken, 1),
+  ).rejects.toMatchObject({ status: 409 });
+  const publicState = await readPublicProfile(client, {
+    slug: state.restaurant.slug,
+    employeeId,
+  });
+  expect(publicState!.employees[0].ratingSummary?.count).toBe(0);
+  const refund = {
+    id: "evt_refund",
+    type: "refund.succeeded",
+    payload: { ...event.payload, id: "refund_1", amount: 2000 },
+  };
+  await applyYocoEvent(transaction, target.restaurantId, refund);
+  expect(
+    await applyYocoEvent(transaction, target.restaurantId, {
+      ...refund,
+      id: "evt_same_refund_again",
+    }),
+  ).toEqual({ duplicate: true });
+  await applyYocoEvent(transaction, target.restaurantId, {
+    ...refund,
+    id: "evt_remaining",
+    payload: { ...refund.payload, id: "refund_2", amount: 3000 },
+  });
+  expect(
+    (await receipt(client, input.requestId, input.receiptToken)).status,
+  ).toBe("refunded");
+  await applyYocoEvent(transaction, target.restaurantId, {
+    ...event,
+    id: "evt_late_success",
+  });
+  expect(
+    (await receipt(client, input.requestId, input.receiptToken)).status,
+  ).toBe("refunded");
+});
+
+test("Yoco signatures reject tampering, stale timestamps and wrong merchant secrets", async () => {
+  const body = JSON.stringify({ id: "evt_1" });
+  const key = Buffer.from("test-only-webhook-secret");
+  const signature = createHmac("sha256", key)
+    .update(`message_1.1000.${body}`)
+    .digest("base64");
+  const headers = new Headers({
+    "webhook-id": "message_1",
+    "webhook-timestamp": "1000",
+    "webhook-signature": `v1,${signature}`,
+  });
+  const secret = `whsec_${key.toString("base64")}`;
+  expect(verifyYocoWebhook(body, headers, secret, 1001)).toBe(true);
+  expect(verifyYocoWebhook(body + " ", headers, secret, 1001)).toBe(false);
+  expect(verifyYocoWebhook(body, headers, secret, 1181)).toBe(false);
+  expect(
+    verifyYocoWebhook(
+      body,
+      headers,
+      `whsec_${Buffer.from("another-merchant").toString("base64")}`,
+      1001,
+    ),
+  ).toBe(false);
+});
+
+test("Yoco adapter uses merchant credentials and rejects foreign redirects and mode mismatches", async () => {
+  const original = globalThis.fetch;
+  const input = {
+    secretKey: "sk_test_fixture",
+    tipId: randomUUID(),
+    restaurantId: randomUUID(),
+    employeeId: randomUUID(),
+    amount: 5000,
+    baseUrl: "https://tipit.example",
+    mode: "test" as const,
+  };
+  let result = {
+    id: "checkout_1",
+    amount: 5000,
+    currency: "ZAR",
+    processingMode: "test",
+    redirectUrl: "https://c.yoco.com/checkout/1",
+  };
+  globalThis.fetch = async (url, options) => {
+    expect(url).toBe("https://payments.yoco.com/api/checkouts");
+    expect(new Headers(options?.headers).get("Authorization")).toBe(
+      "Bearer sk_test_fixture",
+    );
+    expect(new Headers(options?.headers).get("Idempotency-Key")).toBe(
+      input.tipId,
+    );
+    expect(JSON.parse(String(options?.body)).metadata.employeeId).toBe(
+      input.employeeId,
+    );
+    return Response.json(result);
+  };
+  try {
+    expect((await createYocoCheckout(input)).checkoutId).toBe("checkout_1");
+    result = {
+      ...result,
+      redirectUrl: "https://yoco.com.attacker.example/checkout",
+    };
+    await expect(createYocoCheckout(input)).rejects.toThrow(
+      "Invalid checkout redirect",
+    );
+    result = {
+      ...result,
+      redirectUrl: "https://c.yoco.com/checkout/1",
+      processingMode: "live",
+    };
+    await expect(createYocoCheckout(input)).rejects.toThrow("did not match");
+  } finally {
+    globalThis.fetch = original;
+  }
+});
 test("tenant isolation blocks cross-restaurant reads, writes and foreign keys", async () => {
   const a = await create("org_A");
   await create("org_B");
@@ -128,7 +377,9 @@ test("archival suspends links, retains transactions and restores without reactiv
   const archived = await mutate("org_A", 2, [{ type: "employee.archive", id }]);
   expect(archived.state?.tags[0].status).toBe("suspended");
   expect(archived.state?.tips).toHaveLength(1);
-  expect(archived.state?.tips[0].review).toBe("Friendly and attentive service.");
+  expect(archived.state?.tips[0].review).toBe(
+    "Friendly and attentive service.",
+  );
   expect(await readPublicProfile(client, { code: "TEST-001" })).toBeNull();
   await mutate("org_A", 3, [{ type: "employee.restore", id }]);
   expect(await readPublicProfile(client, { code: "TEST-001" })).toBeNull();
@@ -180,14 +431,18 @@ test("payment constraints reject invalid money and unearned ratings", async () =
   const id = randomUUID();
   await mutate("org_A", 1, [staff(id)]);
   const restaurant = (await client.query("SELECT id FROM restaurants")).rows[0];
-  await expect(client.query(
-    "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,review) VALUES($1,$2,1000,'paid','hash','Review without stars')",
-    [restaurant.id, id],
-  )).rejects.toMatchObject({ code: "23514" });
-  await expect(client.query(
-    "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,rating,rated_at,review) VALUES($1,$2,1000,'paid','hash',5,now(),$3)",
-    [restaurant.id, id, "x".repeat(1001)],
-  )).rejects.toMatchObject({ code: "23514" });
+  await expect(
+    client.query(
+      "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,review) VALUES($1,$2,1000,'paid','hash','Review without stars')",
+      [restaurant.id, id],
+    ),
+  ).rejects.toMatchObject({ code: "23514" });
+  await expect(
+    client.query(
+      "INSERT INTO tips(restaurant_id,employee_id,amount_cents,status,receipt_token_hash,rating,rated_at,review) VALUES($1,$2,1000,'paid','hash',5,now(),$3)",
+      [restaurant.id, id, "x".repeat(1001)],
+    ),
+  ).rejects.toMatchObject({ code: "23514" });
   await expect(
     client.query(
       "INSERT INTO tips(restaurant_id,employee_id,amount_cents,receipt_token_hash) VALUES($1,$2,-1,'hash')",

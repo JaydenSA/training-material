@@ -1,20 +1,47 @@
 import { test, expect } from "@playwright/test";
-test("dashboard shell and section skeletons render before data is ready", async ({ browser, baseURL }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false, baseURL });
+test("dashboard shell and section skeletons render before data is ready", async ({
+  browser,
+  baseURL,
+}) => {
+  const context = await browser.newContext({
+    javaScriptEnabled: false,
+    baseURL,
+  });
   const page = await context.newPage();
-  for (const section of ["", "employees", "employees/sarah", "tips", "ratings", "tags", "hardware", "settings"]) {
+  for (const section of [
+    "",
+    "employees",
+    "employees/sarah",
+    "tips",
+    "ratings",
+    "tags",
+    "hardware",
+    "settings",
+  ]) {
     await page.goto(`/dashboard${section ? `/${section}` : ""}`);
     await expect(page.locator(".sidebar")).toBeVisible();
     await expect(page.locator(".sidebar nav a")).toHaveCount(7);
     await expect(page.locator(".dashboard-top")).toBeVisible();
-    await expect(page.locator("main.dashboard-content")).toHaveAttribute("aria-busy", "true");
-    await expect(page.getByRole("status", { name: "Loading dashboard content" })).toBeVisible();
-    await expect(page.locator(".skeleton-bone").first()).toHaveCSS("animation-name", "skeleton-pulse");
+    await expect(page.locator("main.dashboard-content")).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+    await expect(
+      page.getByRole("status", { name: "Loading dashboard content" }),
+    ).toBeVisible();
+    await expect(page.locator(".skeleton-bone").first()).toHaveCSS(
+      "animation-name",
+      "skeleton-pulse",
+    );
     await expect(page.locator(".loading")).toHaveCount(0);
   }
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.locator(".dashboard-skeleton")).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
   await context.close();
 });
 

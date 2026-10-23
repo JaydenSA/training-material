@@ -103,6 +103,9 @@ export const tips = pgTable(
     currency: text("currency").default("ZAR").notNull(),
     status: text("status").default("pending").notNull(),
     checkoutId: text("checkout_id").unique(),
+    checkoutRedirectUrl: text("checkout_redirect_url"),
+    processingMode: text("processing_mode").default("live").notNull(),
+    refundedAmount: integer("refunded_amount_cents").default(0).notNull(),
     paymentId: text("payment_id").unique(),
     receiptTokenHash: text("receipt_token_hash").notNull(),
     rating: integer("rating"),
@@ -119,6 +122,11 @@ export const tips = pgTable(
       foreignColumns: [employees.id, employees.restaurantId],
     }),
     check("tip_amount_bounds", sql`${t.amount} between 500 and 1000000`),
+    check("tip_processing_mode", sql`${t.processingMode} in ('test','live')`),
+    check(
+      "tip_refund_bounds",
+      sql`${t.refundedAmount} between 0 and ${t.amount}`,
+    ),
     check("tip_currency_zar", sql`${t.currency} = 'ZAR'`),
     check(
       "tip_status_valid",
@@ -128,21 +136,31 @@ export const tips = pgTable(
       "tip_rating_bounds",
       sql`${t.rating} is null or ${t.rating} between 1 and 5`,
     ),
-    check("tip_review_eligibility", sql`${t.review} is null or (${t.rating} is not null and char_length(${t.review}) between 1 and 1000)`),
+    check(
+      "tip_review_eligibility",
+      sql`${t.review} is null or (${t.rating} is not null and char_length(${t.review}) between 1 and 1000)`,
+    ),
     check(
       "tip_rating_eligibility",
       sql`${t.rating} is null or (${t.status} in ('paid','refunded') and ${t.ratedAt} is not null)`,
     ),
   ],
 );
-export const webhookEvents = pgTable("webhook_events", {
-  id: text("id").primaryKey(),
-  restaurantId: uuid("restaurant_id")
-    .notNull()
-    .references(() => restaurants.id),
-  type: text("type").notNull(),
-  processedAt: createdAt(),
-});
+export const webhookEvents = pgTable(
+  "webhook_events",
+  {
+    id: text("id").primaryKey(),
+    restaurantId: uuid("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id),
+    type: text("type").notNull(),
+    resourceId: text("resource_id"),
+    processedAt: createdAt(),
+  },
+  (t) => [
+    unique("webhook_resource_once").on(t.restaurantId, t.type, t.resourceId),
+  ],
+);
 export const subscriptions = pgTable(
   "subscriptions",
   {

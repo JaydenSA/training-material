@@ -3,8 +3,8 @@ export default defineConfig({
   testDir: "./tests",
   testMatch:
     process.env.CLERK_TEST_LIVE === "1"
-      ? "**/auth-live.spec.ts"
-      : ["**/demo.spec.ts", "**/auth-config.spec.ts"],
+      ? ["**/auth-live.spec.ts", "**/helpers.spec.ts"]
+      : ["**/demo.spec.ts", "**/auth-config.spec.ts", "**/helpers.spec.ts"],
   timeout: 45000,
   workers: 1,
   use: {

@@ -1,10 +1,10 @@
 "use client";
-import { useContext, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { DemoState, initialState } from "@/lib/demo";
-import { WorkspaceContext as Context } from "./workspace-context";
-import { DatabaseProvider } from "./database-provider";
+import { WorkspaceContext as Context } from "@/components/workspace-context";
+import { DatabaseProvider } from "@/components/database-provider";
 import { usePathname } from "next/navigation";
-import { AuthenticationProvider } from "./auth-provider";
+import { AuthenticationProvider } from "@/components/auth-provider";
 import { saveSimulation } from "@/lib/payment-simulation";
 const KEY = "tipit-demo-v1";
 export function DemoProvider({
@@ -17,25 +17,49 @@ export function DemoProvider({
   const path = usePathname();
   const demo = path === "/demo" || path.startsWith("/demo/");
   const simulation = path.startsWith("/simulation/payment/");
-  if (demo || simulation) return (
-    <AuthenticationProvider enabled={false}>
-      <BrowserDemoProvider key={simulation ? "simulation" : "demo"} simulation={simulation}>{children}</BrowserDemoProvider>
-    </AuthenticationProvider>
-  );
+  if (demo || simulation)
+    return (
+      <AuthenticationProvider enabled={false}>
+        <BrowserDemoProvider
+          key={simulation ? "simulation" : "demo"}
+          simulation={simulation}
+        >
+          {children}
+        </BrowserDemoProvider>
+      </AuthenticationProvider>
+    );
   return databaseEnabled ? (
     <DatabaseProvider>{children}</DatabaseProvider>
   ) : (
     <BrowserDemoProvider>{children}</BrowserDemoProvider>
   );
 }
-function BrowserDemoProvider({ children, simulation = false }: { children: ReactNode; simulation?: boolean }) {
-  const [state, setState] = useState<DemoState>(() => simulation ? {
-    restaurant: { name: "", slug: "", email: "", city: "" }, employees: [], tags: [], tips: [], orders: [], plan: "", onboarded: false,
-  } : initialState());
+function BrowserDemoProvider({
+  children,
+  simulation = false,
+}: {
+  children: ReactNode;
+  simulation?: boolean;
+}) {
+  const [state, setState] = useState<DemoState>(() =>
+    simulation
+      ? {
+          restaurant: { name: "", slug: "", email: "", city: "" },
+          employees: [],
+          tags: [],
+          tips: [],
+          orders: [],
+          plan: "",
+          onboarded: false,
+        }
+      : initialState(),
+  );
   const [ready, setReady] = useState(false);
   useEffect(() => {
     try {
-      const saved = simulation ? sessionStorage.getItem("tipit-payment-simulation") : localStorage.getItem(KEY);
+      const saved = simulation
+        ? sessionStorage.getItem("tipit-payment-simulation")
+        : localStorage.getItem(KEY);
       if (saved) {
         const value = JSON.parse(saved);
         if (
@@ -78,9 +102,4 @@ function BrowserDemoProvider({ children, simulation = false }: { children: React
       {children}
     </Context.Provider>
   );
-}
-export function useDemo() {
-  const ctx = useContext(Context);
-  if (!ctx) throw new Error("Missing demo provider");
-  return ctx;
 }
