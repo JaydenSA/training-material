@@ -20,7 +20,7 @@ test("dashboard shell and section skeletons render before data is ready", async 
   ]) {
     await page.goto(`/demo/dashboard${section ? `/${section}` : ""}`);
     await expect(page.locator(".sidebar")).toBeVisible();
-    await expect(page.locator(".sidebar nav a")).toHaveCount(10);
+    await expect(page.locator(".sidebar nav a")).toHaveCount(11);
     await expect(page.locator(".dashboard-top")).toBeVisible();
     await expect(page.locator("main.dashboard-content")).toHaveAttribute(
       "aria-busy",
@@ -224,6 +224,7 @@ test("public and management pages load and desktop design renders", async ({
     "/terms",
     "/demo/dashboard/ratings",
     "/demo/dashboard/settings",
+    "/demo/dashboard/updates",
   ]) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);

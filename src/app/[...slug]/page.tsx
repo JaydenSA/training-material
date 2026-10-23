@@ -44,6 +44,7 @@ export default async function Page({
     "reports",
     "print",
     "activity",
+    "updates",
   ];
   const supported =
     (publicPages.includes(root) && slug.length === 1) ||

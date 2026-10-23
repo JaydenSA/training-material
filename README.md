@@ -167,6 +167,7 @@ See [Component structure](docs/code-structure.md) for shared component APIs and 
 | `/dashboard/reports`                  | Gross tips, refunds, comparisons, and employee exports |
 | `/dashboard/print`                    | Printable employee QR cards and table stands           |
 | `/dashboard/activity`                 | Restaurant-scoped change history                       |
+| `/dashboard/updates`                  | Dated product history grouped by development batch     |
 | `/dashboard/hardware`                 | Catalogue and unpaid draft orders                      |
 | `/t/[code]`                           | Permanent QR/NFC tipping destination                   |
 | `/r/[restaurantSlug]/[employeeId]`    | Individual employee tipping page                       |
