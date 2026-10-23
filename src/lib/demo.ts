@@ -1,3 +1,4 @@
+import type { ActivityEvent } from "./activity";
 export type Employee = {
   id: string;
   name: string;
@@ -25,6 +26,7 @@ export type Tag = {
   status: "active" | "suspended" | "deleted";
 };
 export type DemoState = {
+  activity?: ActivityEvent[];
   restaurant: { name: string; slug: string; email: string; city: string };
   employees: Employee[];
   tips: Tip[];

@@ -27,7 +27,9 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const path = usePathname();
   const { isLoaded, isSignedIn, orgId, userId } = useAuth();
   const { user } = useUser();
-  const privatePage = path.startsWith("/dashboard") || path === "/onboarding";
+  const testingPage = path === "/dashboard/testing";
+  const privatePage =
+    !testingPage && (path.startsWith("/dashboard") || path === "/onboarding");
   const guestPage =
     /^\/(t|payment)\/[^/]+$/.test(path) ||
     /^\/(r|tip)\/[^/]+\/[^/]+$/.test(path);
@@ -76,7 +78,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     async function load() {
       if (!privatePage && !guestPage) {
         if (active) {
-          const marketing = initialState();
+          const marketing = testingPage ? emptyState() : initialState();
           current.current = marketing;
           setState(marketing);
           setReady(true);
@@ -149,6 +151,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     path,
     privatePage,
     guestPage,
+    testingPage,
     isLoaded,
     isSignedIn,
     orgId,

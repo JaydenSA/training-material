@@ -3,6 +3,7 @@ import { PGlite } from "@electric-sql/pglite";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID, createHmac } from "node:crypto";
+import { readActivity } from "../src/lib/db/activity-repository";
 import {
   applyYocoEvent,
   checkoutTarget,
@@ -83,6 +84,28 @@ const staff = (id: string): WorkspaceCommand => ({
   role: "Waiter",
   bio: "Hello",
   color: "#e3eee4",
+});
+
+test("activity history is restaurant scoped and preserves the verified actor", async () => {
+  await create("org_A");
+  await create("org_B");
+  const employeeId = randomUUID();
+  await mutate("org_A", 1, [staff(employeeId)]);
+  const activity = await readActivity(client, "org_A");
+  expect(activity.events).toHaveLength(2);
+  expect(activity.events.every((event) => event.actorId === "test_actor")).toBe(
+    true,
+  );
+  expect(
+    activity.events.some(
+      (event) =>
+        event.action === "employee.create" && event.targetId === employeeId,
+    ),
+  ).toBe(true);
+  expect(activity.events.some((event) => event.targetName === "org_B")).toBe(
+    false,
+  );
+  expect((await readActivity(client, "org_B")).events).toHaveLength(1);
 });
 
 test("Yoco checkout attribution and retry keys stay bound to one restaurant and receipt", async () => {

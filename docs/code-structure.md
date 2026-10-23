@@ -3,6 +3,7 @@
 `src/components/tipit-app.tsx` selects the page for the current route. Page implementations live in feature directories:
 
 - `dashboard/`: the persistent menu/layout, overview, transactions, ratings, employees, tags/QR generation, hardware drafts, settings, and loading skeletons.
+- `dashboard/setup-checklist.tsx`, `employee-insights.tsx`, `reports.tsx`, `print-materials.tsx`, `activity.tsx`, and `team-access.tsx` implement the restaurant-pilot improvements.
 - `public/`: landing page, pricing, how it works, account/onboarding screens, and informational pages. Pricing and how-it-works components also support embedded landing-page sections.
 - `tipping/`: employee tipping page, demo receipt, Yoco receipt, and the receipt-mode dispatcher.
 
@@ -28,6 +29,8 @@ Keep business rules and persistence in `src/lib` and API routes. A shared UI com
 - `src/lib/format.ts`: South African date labels and filter keys.
 - `src/lib/csv.ts`: CSV quoting, spreadsheet-formula neutralisation, and browser download handling.
 - `src/lib/reviews.ts`: the review length shared by the form and review-submission API. Database constraints continue to enforce the same limit independently.
+- `src/lib/reporting.ts`: date filtering, gross/refund/net summaries, and equal-length previous-period calculations. Test payments stay out of financial totals.
+- `src/lib/activity.ts` and `src/lib/db/activity-repository.ts`: browser-demo change history and restaurant-scoped server audit reads respectively.
 
 Prefer a local component until a pattern is used in multiple places. Add shared components around actual repeated behaviour; avoid one configuration-driven component that handles unrelated page workflows.
 

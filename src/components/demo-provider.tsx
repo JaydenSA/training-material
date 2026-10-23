@@ -6,6 +6,7 @@ import { DatabaseProvider } from "@/components/database-provider";
 import { usePathname } from "next/navigation";
 import { AuthenticationProvider } from "@/components/auth-provider";
 import { saveSimulation } from "@/lib/payment-simulation";
+import { demoActivity } from "@/lib/activity";
 const KEY = "tipit-demo-v1";
 export function DemoProvider({
   children,
@@ -91,7 +92,16 @@ function BrowserDemoProvider({
       value={{
         state,
         update: (fn) => {
-          setState(fn);
+          setState((before) => {
+            const after = fn(before);
+            return {
+              ...after,
+              activity: [
+                ...demoActivity(before, after),
+                ...(before.activity || []),
+              ].slice(0, 500),
+            };
+          });
           return true;
         },
         reset: () => setState(initialState()),

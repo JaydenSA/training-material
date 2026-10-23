@@ -1,5 +1,6 @@
 import { TipitApp } from "@/components/tipit-app";
 import { notFound } from "next/navigation";
+import { canAccessTesting } from "@/lib/testing/auth";
 export default async function Page({
   params,
 }: {
@@ -17,6 +18,10 @@ export default async function Page({
       : original;
   if (simulation && !(slug[0] === "payment" && slug.length === 2)) notFound();
   const [root] = slug;
+  if (root === "dashboard" && slug[1] === "testing") {
+    if (sandbox || slug.length !== 2 || !(await canAccessTesting())) notFound();
+    return <TipitApp segments={slug} />;
+  }
   const publicPages = [
     "choose-organization",
     "pricing",
@@ -36,6 +41,9 @@ export default async function Page({
     "tags",
     "hardware",
     "settings",
+    "reports",
+    "print",
+    "activity",
   ];
   const supported =
     (publicPages.includes(root) && slug.length === 1) ||

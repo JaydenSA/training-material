@@ -1,6 +1,127 @@
 import { test, expect } from "@playwright/test";
 import { initialState } from "../src/lib/demo";
 
+test("setup, employee insights and activity work together without sending invitations", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/demo/dashboard");
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({
+    path: "test-results/pilot-dashboard-desktop.png",
+    fullPage: true,
+  });
+  await expect(
+    page.getByRole("region", { name: "Restaurant setup checklist" }),
+  ).toContainText("3 of 4 setup steps complete");
+  await page.goto("/demo/dashboard/employees/sarah");
+  await expect(
+    page.getByRole("table", { name: "Employee tips", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("table", { name: "Employee reviews", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("table", { name: "Employee tags", exact: true }),
+  ).toContainText("GT-001");
+  await page.getByLabel("Report from", { exact: true }).fill("2099-01-01");
+  await expect(
+    page
+      .getByRole("table", { name: "Employee tips", exact: true })
+      .locator("tbody tr"),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Reset report filters" }).click();
+  await page.getByLabel("Full name", { exact: true }).fill("Sarah Updated");
+  await page.getByRole("button", { name: "Save profile", exact: true }).click();
+  await page.goto("/demo/dashboard/activity");
+  await expect(
+    page.getByRole("table", { name: "Activity history", exact: true }),
+  ).toContainText("Updated employee");
+  await expect(
+    page.getByRole("table", { name: "Activity history", exact: true }),
+  ).toContainText("Demo owner");
+  await page.goto("/demo/dashboard/settings#team");
+  await expect(
+    page.getByRole("heading", { name: "Dashboard access preview" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Invitations are disabled in the public demo.", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  expect((await request.get("/api/activity")).status()).toBe(401);
+});
+
+test("reports export employee summaries and compare periods", async ({
+  page,
+}) => {
+  await page.goto("/demo/dashboard/reports");
+  await expect(
+    page
+      .getByRole("table", { name: "Employee report", exact: true })
+      .locator("tbody tr"),
+  ).toHaveCount(4);
+  await page
+    .getByRole("combobox", { name: "Report employee", exact: true })
+    .selectOption("sarah");
+  await expect(
+    page
+      .getByRole("table", { name: "Employee report", exact: true })
+      .locator("tbody tr"),
+  ).toHaveCount(1);
+  await page.getByLabel("Report from", { exact: true }).fill("2026-10-01");
+  await page.getByLabel("Report until", { exact: true }).fill("2026-10-31");
+  await expect(
+    page.getByText("Previous net before fees:", { exact: false }),
+  ).toBeVisible();
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export employee summary" }).click();
+  expect((await downloadPromise).suggestedFilename()).toBe(
+    "tipit-employee-summary.csv",
+  );
+});
+
+test("print sheets exclude inactive tags and mobile navigation supports keyboard recovery", async ({
+  page,
+}) => {
+  await page.goto("/demo/dashboard/print");
+  await expect(
+    page.getByRole("button", { name: "Print / Save as PDF" }),
+  ).toBeEnabled();
+  await expect(page.locator(".print-qr-card")).toHaveCount(3);
+  await expect(page.locator(".print-sheet")).not.toContainText("GT-004");
+  await page
+    .getByRole("combobox", { name: "Print employee", exact: true })
+    .selectOption("sarah");
+  await expect(page.locator(".print-qr-card")).toHaveCount(1);
+  await expect(page.locator(".print-sheet img")).toHaveAttribute(
+    "src",
+    /data:image\/svg\+xml/,
+  );
+  await page.emulateMedia({ media: "print" });
+  await expect(page.locator(".sidebar")).toBeHidden();
+  await expect(page.locator(".print-controls")).toBeHidden();
+  await expect(page.locator(".print-sheet")).toBeVisible();
+  await page.emulateMedia({ media: "screen" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Toggle navigation" }).click();
+  await expect(
+    page.getByRole("button", { name: "Toggle navigation" }),
+  ).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(
+    page.getByRole("button", { name: "Toggle navigation" }),
+  ).toHaveAttribute("aria-expanded", "false");
+  await expect(
+    page.getByRole("button", { name: "Toggle navigation" }),
+  ).toBeFocused();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
+
 test("Yoco receipt waits for server confirmation and submits a real review without simulation controls", async ({
   page,
 }) => {
