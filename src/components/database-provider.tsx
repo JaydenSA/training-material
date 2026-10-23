@@ -12,7 +12,7 @@ import Link from "next/link";
 import { OrganizationList, useAuth, useUser } from "@clerk/nextjs";
 import { initialState, type DemoState } from "@/lib/demo";
 import { deriveCommands } from "@/lib/workspace-contract";
-import { WorkspaceContext } from "./workspace-context";
+import { WorkspaceContext } from "@/components/workspace-context";
 const emptyState = (): DemoState => ({
   restaurant: { name: "", slug: "", email: "", city: "" },
   employees: [],
@@ -28,11 +28,16 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const { isLoaded, isSignedIn, orgId, userId } = useAuth();
   const { user } = useUser();
   const privatePage = path.startsWith("/dashboard") || path === "/onboarding";
-  const guestPage = /^\/(t|payment)\/[^/]+$/.test(path) || /^\/(r|tip)\/[^/]+\/[^/]+$/.test(path);
+  const guestPage =
+    /^\/(t|payment)\/[^/]+$/.test(path) ||
+    /^\/(r|tip)\/[^/]+\/[^/]+$/.test(path);
   const [state, setState] = useState<DemoState>(emptyState);
   const current = useRef(state);
   const version = useRef(0);
   const [ready, setReady] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"demo" | "test" | "live">(
+    "demo",
+  );
   const [error, setError] = useState("");
   const [pending, setPending] = useState(0);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -46,7 +51,9 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [loadedPath, setLoadedPath] = useState("");
   const visibleState = dataScope.current === scope ? state : emptyState();
   const contentReady =
-    ready && loadedPath === path && dataScope.current === scope &&
+    ready &&
+    loadedPath === path &&
+    dataScope.current === scope &&
     (!privatePage || (isLoaded && isSignedIn && !!orgId));
   const install = useCallback((value: Result) => {
     const next = value.state || emptyState();
@@ -58,6 +65,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     const controller = new AbortController();
     let active = true;
     setReady(false);
+    setPaymentMode("demo");
     setError("");
     setLoadFailed(false);
     if (dataScope.current !== scope) {
@@ -77,7 +85,10 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (privatePage && (!isLoaded || !isSignedIn || !orgId)) {
-        if (active) { setReady(true); setLoadedPath(path); }
+        if (active) {
+          setReady(true);
+          setLoadedPath(path);
+        }
         return;
       }
       try {
@@ -86,7 +97,10 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         if (guestPage) {
           const segments = path.split("/").filter(Boolean);
           if (segments[0] === "payment") {
-            if (active) { setReady(true); setLoadedPath(path); }
+            if (active) {
+              setReady(true);
+              setLoadedPath(path);
+            }
             return;
           }
           url =
@@ -100,6 +114,8 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
           signal: controller.signal,
         });
         const value = await response.json();
+        if (active && guestPage && response.ok)
+          setPaymentMode(value.paymentMode || "demo");
         if (guestPage && response.status === 404) {
           if (active) install({ state: null, version: 0 });
           return;
@@ -118,7 +134,10 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
           );
         }
       } finally {
-        if (active) { setReady(true); setLoadedPath(path); }
+        if (active) {
+          setReady(true);
+          setLoadedPath(path);
+        }
       }
     }
     void load();
@@ -234,7 +253,12 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         />
       </div>
     );
-  if ((privatePage || guestPage) && contentReady && loadFailed && !path.startsWith("/dashboard"))
+  if (
+    (privatePage || guestPage) &&
+    contentReady &&
+    loadFailed &&
+    !path.startsWith("/dashboard")
+  )
     return (
       <div className="public-content">
         <h1>Restaurant data is unavailable.</h1>
@@ -253,6 +277,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         loadError: loadFailed ? error : undefined,
         retry: () => setReload((x) => x + 1),
         mode: "database",
+        paymentMode,
         reset: () =>
           setError(
             "Demo reset is unavailable for persistent restaurant records.",

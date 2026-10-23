@@ -675,25 +675,98 @@ footer > small {
   gap: 16px;
   margin-bottom: 25px;
 }
-.ratings-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; align-items: end; padding: 24px; border-bottom: 1px solid var(--border); }
-.ratings-filters label { margin: 0; min-width: 0; }
-.ratings-filters input, .ratings-filters select { width: 100%; min-width: 0; margin-bottom: 0; }
-.ratings-filters .button { min-height: 42px; }
-.ratings-caption { padding: 0 24px; margin: 16px 0; font-size: 12px; }
-.ratings-table { min-width: 760px; }
-.ratings-table td { vertical-align: top; }
-.ratings-table .review-text { min-width: 220px; max-width: 440px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.review-stars { color: #967334; white-space: nowrap; }
-@media (max-width: 480px) { .ratings-filters { grid-template-columns: 1fr; padding: 18px; } }
-.review-field { display: block; text-align: left; margin-top: 22px; }
-.review-field textarea { width: 100%; resize: vertical; min-height: 110px; margin-top: 8px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font: inherit; }
-.review-field textarea:focus { outline: 2px solid #257858; outline-offset: 2px; }
-.written-review { padding: 20px 0; border-top: 1px solid var(--border); }
-.written-review:first-of-type { margin-top: 18px; }
-.review-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.review-meta span { color: #967334; }
-.review-meta time { color: #687469; font-size: 12px; }
-.review-text { white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; }
+.ratings-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  align-items: end;
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.ratings-filters label {
+  margin: 0;
+  min-width: 0;
+}
+.ratings-filters input,
+.ratings-filters select {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 0;
+}
+.ratings-filters .button {
+  min-height: 42px;
+}
+.ratings-caption {
+  padding: 0 24px;
+  margin: 16px 0;
+  font-size: 12px;
+}
+.ratings-table {
+  min-width: 760px;
+}
+.ratings-table td {
+  vertical-align: top;
+}
+.ratings-table .review-text {
+  min-width: 220px;
+  max-width: 440px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.review-stars {
+  color: #967334;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .ratings-filters {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+}
+.review-field {
+  display: block;
+  text-align: left;
+  margin-top: 22px;
+}
+.review-field textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+.review-field textarea:focus {
+  outline: 2px solid #257858;
+  outline-offset: 2px;
+}
+.written-review {
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+}
+.written-review:first-of-type {
+  margin-top: 18px;
+}
+.review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.review-meta span {
+  color: #967334;
+}
+.review-meta time {
+  color: #687469;
+  font-size: 12px;
+}
+.review-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
 .skeleton-bone {
   height: 12px;
   width: 100%;
@@ -701,26 +774,98 @@ footer > small {
   background: #e7ebe4;
   animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
-.skeleton-bone + .skeleton-bone { margin-top: 14px; }
-.skeleton-heading { margin-bottom: 28px; max-width: 420px; }
-.skeleton-heading .skeleton-heading { height: 30px; width: 65%; margin-bottom: 16px; }
-.skeleton-title { width: 55%; height: 20px; margin-bottom: 24px; }
-.skeleton-short { width: 45%; }
-.skeleton-avatar { width: 52px; height: 52px; border-radius: 50%; margin-bottom: 24px; }
-.skeleton-image { height: 150px; margin-bottom: 24px; }
-.skeleton-button { width: 135px; height: 40px; }
-.skeleton-input { height: 42px; }
-.skeleton-field { margin: 24px 0; }
-.skeleton-divider { border-top: 1px solid var(--border); margin: 24px 0; }
-.skeleton-toolbar { display: flex; gap: 16px; align-items: center; margin-bottom: 24px; }
-.skeleton-toolbar .skeleton-input { max-width: 300px; }
-.skeleton-toolbar .skeleton-bone { margin-top: 0; }
-.skeleton-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 20px; padding: 21px 0; border-top: 1px solid var(--border); }
-.skeleton-row .skeleton-bone { margin: 0; width: 100%; }
-.skeleton-chart { height: 220px; display: flex; align-items: end; gap: 16px; padding-top: 25px; }
-.skeleton-chart .skeleton-bone { flex: 1; margin: 0; }
-@keyframes skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-@media (prefers-reduced-motion: reduce) { .skeleton-bone { animation: none; } }
+.skeleton-bone + .skeleton-bone {
+  margin-top: 14px;
+}
+.skeleton-heading {
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+.skeleton-heading .skeleton-heading {
+  height: 30px;
+  width: 65%;
+  margin-bottom: 16px;
+}
+.skeleton-title {
+  width: 55%;
+  height: 20px;
+  margin-bottom: 24px;
+}
+.skeleton-short {
+  width: 45%;
+}
+.skeleton-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  margin-bottom: 24px;
+}
+.skeleton-image {
+  height: 150px;
+  margin-bottom: 24px;
+}
+.skeleton-button {
+  width: 135px;
+  height: 40px;
+}
+.skeleton-input {
+  height: 42px;
+}
+.skeleton-field {
+  margin: 24px 0;
+}
+.skeleton-divider {
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+.skeleton-toolbar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.skeleton-toolbar .skeleton-input {
+  max-width: 300px;
+}
+.skeleton-toolbar .skeleton-bone {
+  margin-top: 0;
+}
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 20px;
+  padding: 21px 0;
+  border-top: 1px solid var(--border);
+}
+.skeleton-row .skeleton-bone {
+  margin: 0;
+  width: 100%;
+}
+.skeleton-chart {
+  height: 220px;
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  padding-top: 25px;
+}
+.skeleton-chart .skeleton-bone {
+  flex: 1;
+  margin: 0;
+}
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-bone {
+    animation: none;
+  }
+}
 .stat {
   background: #fff;
   border: 1px solid var(--border);

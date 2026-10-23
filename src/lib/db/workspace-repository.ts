@@ -31,7 +31,7 @@ export async function readWorkspace(
       [restaurant.id],
     ),
     client.query(
-      "SELECT id,employee_id,amount_cents,status,created_at,rating,review FROM tips WHERE restaurant_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC",
+      "SELECT id,employee_id,amount_cents,status,created_at,rating,review,processing_mode,refunded_amount_cents FROM tips WHERE restaurant_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC",
       [restaurant.id],
     ),
     client.query(
@@ -72,6 +72,8 @@ export async function readWorkspace(
         createdAt: iso(t.created_at)!,
         rating: t.rating === null ? undefined : Number(t.rating),
         review: t.review == null ? undefined : String(t.review),
+        processingMode: t.processing_mode as "test" | "live",
+        refundedAmount: Number(t.refunded_amount_cents || 0),
       })),
       tags: links.rows.map((t) => ({
         id: String(t.code),
@@ -337,8 +339,8 @@ export async function readPublicProfile(
   const row = (
     await client.query(
       `SELECT r.name restaurant_name,r.slug,r.city,e.id,e.name,e.role,e.bio,e.color,t.code,t.format,
- (SELECT count(*)::int FROM tips p WHERE p.employee_id=e.id AND p.restaurant_id=r.id AND p.status='paid' AND p.rating IS NOT NULL AND p.deleted_at IS NULL) rating_count,
- (SELECT avg(rating)::float FROM tips p WHERE p.employee_id=e.id AND p.restaurant_id=r.id AND p.status='paid' AND p.rating IS NOT NULL AND p.deleted_at IS NULL) rating_average
+ (SELECT count(*)::int FROM tips p WHERE p.employee_id=e.id AND p.restaurant_id=r.id AND p.status='paid' AND p.processing_mode='live' AND p.rating IS NOT NULL AND p.deleted_at IS NULL) rating_count,
+ (SELECT avg(rating)::float FROM tips p WHERE p.employee_id=e.id AND p.restaurant_id=r.id AND p.status='paid' AND p.processing_mode='live' AND p.rating IS NOT NULL AND p.deleted_at IS NULL) rating_average
  FROM employees e JOIN restaurants r ON r.id=e.restaurant_id
  ${lookup.code ? "JOIN tags t ON t.employee_id=e.id AND t.restaurant_id=r.id" : "LEFT JOIN tags t ON false"}
  WHERE ${lookup.code ? "t.code=$1 AND t.deleted_at IS NULL AND t.suspended_at IS NULL" : "r.slug=$1 AND e.id=$2"} AND e.deleted_at IS NULL AND e.visible=true AND r.deleted_at IS NULL LIMIT 1`,

@@ -8,7 +8,13 @@ export default async function Page({
   const { slug: original } = await params;
   const sandbox = original[0] === "demo";
   const simulation = original[0] === "simulation";
-  const slug = sandbox ? (original.length === 1 ? ["dashboard"] : original.slice(1)) : simulation ? original.slice(1) : original;
+  const slug = sandbox
+    ? original.length === 1
+      ? ["dashboard"]
+      : original.slice(1)
+    : simulation
+      ? original.slice(1)
+      : original;
   if (simulation && !(slug[0] === "payment" && slug.length === 2)) notFound();
   const [root] = slug;
   const publicPages = [

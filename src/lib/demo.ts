@@ -15,6 +15,8 @@ export type Tip = {
   createdAt: string;
   rating?: number;
   review?: string;
+  processingMode?: "test" | "live";
+  refundedAmount?: number;
 };
 export type Tag = {
   id: string;
@@ -93,7 +95,12 @@ export const initialState = (): DemoState => {
       status: i === 8 ? "refunded" : i === 14 ? "failed" : "paid",
       createdAt: new Date(now.getTime() - i * 5 * 3600000).toISOString(),
       rating: i % 5 === 0 ? undefined : i % 7 === 0 ? 4 : 5,
-      review: i === 1 ? "Friendly service and great recommendations. Thank you!" : i === 2 ? "The coffee was lovely and the service made our morning." : undefined,
+      review:
+        i === 1
+          ? "Friendly service and great recommendations. Thank you!"
+          : i === 2
+            ? "The coffee was lovely and the service made our morning."
+            : undefined,
     })),
     tags: [
       { id: "GT-001", employeeId: "sarah", type: "NFC card", status: "active" },
@@ -115,7 +122,11 @@ export const ratingFor = (state: DemoState, id: string) => {
   const summary = state.employees.find((e) => e.id === id)?.ratingSummary;
   if (summary) return summary;
   const rated = state.tips.filter(
-    (t) => t.employeeId === id && t.status === "paid" && t.rating,
+    (t) =>
+      t.employeeId === id &&
+      t.status === "paid" &&
+      t.rating &&
+      t.processingMode !== "test",
   );
   return {
     count: rated.length,
