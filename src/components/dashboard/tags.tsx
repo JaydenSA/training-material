@@ -29,7 +29,14 @@ export function Tags() {
   }
   return (
     <>
-      <Heading title="Small tags. Meaningful connections.">
+      <Heading
+        title="Small tags. Meaningful connections."
+        action={
+          <Link className="button secondary" href="/dashboard/print">
+            Print QR materials
+          </Link>
+        }
+      >
         Create permanent links for QR codes and NFC cards. Suspended or deleted
         tags cannot accept tips.
       </Heading>

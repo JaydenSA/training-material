@@ -15,6 +15,7 @@
     "db:migrate": "node scripts/migrate-database.mjs",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
+    "test:functional": "playwright test --config=playwright.db.config.ts && playwright test",
     "db:check": "node scripts/check-database.mjs",
     "test:db": "playwright test --config=playwright.db.config.ts",
     "yoco:webhook": "node scripts/register-yoco-webhook.mjs"

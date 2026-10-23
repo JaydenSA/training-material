@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useWorkspace } from "@/components/workspace-context";
 import { Employee, money, ratingFor } from "@/lib/demo";
 import { Avatar, Badge, Empty, Heading } from "@/components/ui";
+import { EmployeeInsights } from "@/components/dashboard/employee-insights";
 
 export function Employees({ id }: { id?: string }) {
   const { state, update } = useWorkspace();
@@ -12,13 +13,13 @@ export function Employees({ id }: { id?: string }) {
   const [archived, setArchived] = useState(false);
   const [message, setMessage] = useState("");
   const employee = state.employees.find((e) => e.id === id);
-  function save(event: FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name")).trim();
     const role = String(data.get("role")).trim();
     if (!name || !role) return;
-    update((s) => ({
+    const saved = await update((s) => ({
       ...s,
       employees: [
         ...s.employees,
@@ -32,6 +33,7 @@ export function Employees({ id }: { id?: string }) {
         },
       ],
     }));
+    if (!saved) return;
     setForm(false);
     setMessage("Team member added. Create their tag in QR & NFC tags.");
   }
@@ -75,13 +77,13 @@ export function Employees({ id }: { id?: string }) {
           <section className="panel pad">
             <Avatar employee={employee} large />
             <form
-              onSubmit={(event) => {
+              onSubmit={async (event) => {
                 event.preventDefault();
                 const data = new FormData(event.currentTarget);
                 const name = String(data.get("name")).trim();
                 const role = String(data.get("role")).trim();
                 if (!name || !role) return;
-                update((s) => ({
+                const saved = await update((s) => ({
                   ...s,
                   employees: s.employees.map((e) =>
                     e.id === id
@@ -94,7 +96,7 @@ export function Employees({ id }: { id?: string }) {
                       : e,
                   ),
                 }));
-                setMessage("Profile saved.");
+                if (saved) setMessage("Profile saved.");
               }}
             >
               <label>
@@ -138,7 +140,12 @@ export function Employees({ id }: { id?: string }) {
               <strong>
                 {money(
                   state.tips
-                    .filter((t) => t.employeeId === id && t.status === "paid")
+                    .filter(
+                      (t) =>
+                        t.employeeId === id &&
+                        t.status === "paid" &&
+                        t.processingMode !== "test",
+                    )
                     .reduce((s, t) => s + t.amount, 0),
                 )}
               </strong>
@@ -184,6 +191,7 @@ export function Employees({ id }: { id?: string }) {
             )}
           </section>
         </div>
+        <EmployeeInsights key={employee.id} employeeId={employee.id} />
       </>
     );
   const rows = state.employees.filter(
@@ -285,7 +293,10 @@ export function Employees({ id }: { id?: string }) {
                   {money(
                     state.tips
                       .filter(
-                        (t) => t.employeeId === e.id && t.status === "paid",
+                        (t) =>
+                          t.employeeId === e.id &&
+                          t.status === "paid" &&
+                          t.processingMode !== "test",
                       )
                       .reduce((s, t) => s + t.amount, 0),
                   )}

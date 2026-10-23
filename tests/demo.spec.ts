@@ -18,9 +18,9 @@ test("dashboard shell and section skeletons render before data is ready", async 
     "hardware",
     "settings",
   ]) {
-    await page.goto(`/dashboard${section ? `/${section}` : ""}`);
+    await page.goto(`/demo/dashboard${section ? `/${section}` : ""}`);
     await expect(page.locator(".sidebar")).toBeVisible();
-    await expect(page.locator(".sidebar nav a")).toHaveCount(7);
+    await expect(page.locator(".sidebar nav a")).toHaveCount(10);
     await expect(page.locator(".dashboard-top")).toBeVisible();
     await expect(page.locator("main.dashboard-content")).toHaveAttribute(
       "aria-busy",
@@ -48,7 +48,7 @@ test("dashboard shell and section skeletons render before data is ready", async 
 test("guest tip becomes a confirmed restaurant transaction with one rating", async ({
   page,
 }) => {
-  await page.goto("/t/GT-001");
+  await page.goto("/demo/t/GT-001");
   await expect(
     page.getByRole("heading", { name: "Say thanks to Sarah." }),
   ).toBeVisible();
@@ -82,23 +82,23 @@ test("guest tip becomes a confirmed restaurant transaction with one rating", asy
 test("archive suspends tags and preserves historical transactions", async ({
   page,
 }) => {
-  await page.goto("/dashboard/employees/sarah");
+  await page.goto("/demo/dashboard/employees/sarah");
   page.on("dialog", (dialog) => dialog.accept());
   await page
     .getByRole("button", { name: "Archive employee", exact: true })
     .click();
   await expect(page.getByText("Archived", { exact: true })).toBeVisible();
-  await page.goto("/t/GT-001");
+  await page.goto("/demo/t/GT-001");
   await expect(
     page.getByRole("heading", {
       name: "This tipping link is no longer active.",
     }),
   ).toBeVisible();
-  await page.goto("/dashboard/tips");
+  await page.goto("/demo/dashboard/tips");
   await expect(page.locator("tbody")).toContainText("Sarah Jacobs");
-  await page.goto("/dashboard/employees/sarah");
+  await page.goto("/demo/dashboard/employees/sarah");
   await page.getByRole("button", { name: "Restore employee" }).click();
-  await page.goto("/t/GT-001");
+  await page.goto("/demo/t/GT-001");
   await expect(
     page.getByRole("heading", {
       name: "This tipping link is no longer active.",
@@ -108,7 +108,7 @@ test("archive suspends tags and preserves historical transactions", async ({
 test("employee creation, QR generation, hardware order and reset work", async ({
   page,
 }) => {
-  await page.goto("/dashboard/employees");
+  await page.goto("/demo/dashboard/employees");
   await page.getByRole("button", { name: "+ Add team member" }).click();
   await page.getByLabel("Full name").fill("Lerato Ndlovu");
   await page.getByLabel("Role", { exact: true }).fill("Waiter");
@@ -116,7 +116,7 @@ test("employee creation, QR generation, hardware order and reset work", async ({
   await expect(
     page.getByRole("heading", { name: "Lerato Ndlovu" }),
   ).toBeVisible();
-  await page.goto("/dashboard/tags");
+  await page.goto("/demo/dashboard/tags");
   await page.getByLabel("Team member").selectOption({ label: "Lerato Ndlovu" });
   await page.getByRole("button", { name: "Create link" }).click();
   await expect(page.locator("tbody tr").last()).toContainText("Lerato Ndlovu");
@@ -126,14 +126,14 @@ test("employee creation, QR generation, hardware order and reset work", async ({
     .getByRole("button", { name: "QR", exact: true })
     .click();
   await expect(page.getByRole("link", { name: "Download QR" })).toBeVisible();
-  await page.goto("/dashboard/hardware");
+  await page.goto("/demo/dashboard/hardware");
   await page.getByRole("button", { name: "Create demo order" }).first().click();
   await expect(page.locator(".order-row")).toContainText("Personal NFC card");
-  await page.goto("/dashboard/settings");
+  await page.goto("/demo/dashboard/settings");
   await page.getByRole("button", { name: "Demo controls" }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "Reset demo data" }).click();
-  await page.goto("/dashboard/employees");
+  await page.goto("/demo/dashboard/employees");
   await expect(
     page.getByRole("heading", { name: "Lerato Ndlovu" }),
   ).toHaveCount(0);
@@ -146,7 +146,7 @@ test("checkout rejects invalid amounts; non-successful tips cannot be rated", as
     data: { amount: -100, employeeId: "sarah" },
   });
   expect(invalid.status()).toBe(400);
-  await page.goto("/t/GT-001");
+  await page.goto("/demo/t/GT-001");
   await page.getByRole("button", { name: /Continue with/ }).click();
   await page.getByRole("button", { name: "Simulate failed payment" }).click();
   await expect(
@@ -171,7 +171,7 @@ test("mobile landing and dashboard fit the viewport", async ({ page }) => {
     path: "test-results/landing-mobile.png",
     fullPage: true,
   });
-  await page.goto("/dashboard");
+  await page.goto("/demo/dashboard");
   await expect(
     page.getByRole("heading", { name: "A little thanks, adding up." }),
   ).toBeVisible();
@@ -204,7 +204,7 @@ test("public and management pages load and desktop design renders", async ({
     path: "test-results/landing-desktop.png",
     fullPage: true,
   });
-  await page.goto("/dashboard");
+  await page.goto("/demo/dashboard");
   await expect(
     page.getByRole("heading", { name: "A little thanks, adding up." }),
   ).toBeVisible();
@@ -215,15 +215,15 @@ test("public and management pages load and desktop design renders", async ({
   for (const route of [
     "/pricing",
     "/how-it-works",
-    "/sign-in",
-    "/sign-up",
-    "/onboarding",
-    "/account",
+    "/demo/sign-in",
+    "/demo/sign-up",
+    "/demo/onboarding",
+    "/demo/account",
     "/help",
     "/privacy",
     "/terms",
-    "/dashboard/ratings",
-    "/dashboard/settings",
+    "/demo/dashboard/ratings",
+    "/demo/dashboard/settings",
   ]) {
     const response = await page.goto(route);
     expect(response?.status()).toBe(200);

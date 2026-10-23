@@ -20,6 +20,10 @@ Cashless tipping and guest reviews for restaurants. Guests scan a QR code or tap
 - **Ratings and reviews:** individual submissions in a searchable table with employee, star, date, written-review, and source filters.
 - **Transaction reporting:** payment history, filters, CSV export, and clearly labelled test payments.
 - **Client demonstrations:** a public demo workspace that stays separate from connected restaurant data.
+- **Guided setup:** a checklist for restaurant details, staff, active tags, and Yoco configuration.
+- **Employee insights:** date-filtered tip history, review breakdowns, and assigned tags in one profile.
+- **Print and reporting:** QR cards/table stands, period comparisons, and employee summary exports.
+- **Team and activity:** owner-managed Clerk membership and restaurant-scoped change history.
 
 Tips go to each restaurant’s own Yoco account. Restaurant management handles staff distribution and processing fees; Tipit does not provide employee wallets or payroll.
 
@@ -150,21 +154,24 @@ See [Component structure](docs/code-structure.md) for shared component APIs and 
 
 ## Main routes
 
-| Route                                 | Purpose                                         |
-| ------------------------------------- | ----------------------------------------------- |
-| `/`                                   | Landing page with pricing and how it works      |
-| `/demo/dashboard`                     | Public, browser-only demo workspace             |
-| `/dashboard`                          | Authenticated restaurant overview               |
-| `/dashboard/employees`                | Staff management and individual profiles        |
-| `/dashboard/tips`                     | Transaction table, filters, and CSV export      |
-| `/dashboard/ratings`                  | Ratings and written-review table                |
-| `/dashboard/tags`                     | QR/NFC links and tag controls                   |
-| `/dashboard/settings`                 | Restaurant details, team, and connection status |
-| `/dashboard/hardware`                 | Catalogue and unpaid draft orders               |
-| `/t/[code]`                           | Permanent QR/NFC tipping destination            |
-| `/r/[restaurantSlug]/[employeeId]`    | Individual employee tipping page                |
-| `/payment/[reference]`                | Payment receipt and eligible review submission  |
-| `/sign-in`, `/sign-up`, `/onboarding` | Authentication and restaurant setup             |
+| Route                                 | Purpose                                                |
+| ------------------------------------- | ------------------------------------------------------ |
+| `/`                                   | Landing page with pricing and how it works             |
+| `/demo/dashboard`                     | Public, browser-only demo workspace                    |
+| `/dashboard`                          | Authenticated restaurant overview                      |
+| `/dashboard/employees`                | Staff management and individual profiles               |
+| `/dashboard/tips`                     | Transaction table, filters, and CSV export             |
+| `/dashboard/ratings`                  | Ratings and written-review table                       |
+| `/dashboard/tags`                     | QR/NFC links and tag controls                          |
+| `/dashboard/settings`                 | Restaurant details, team, and connection status        |
+| `/dashboard/reports`                  | Gross tips, refunds, comparisons, and employee exports |
+| `/dashboard/print`                    | Printable employee QR cards and table stands           |
+| `/dashboard/activity`                 | Restaurant-scoped change history                       |
+| `/dashboard/hardware`                 | Catalogue and unpaid draft orders                      |
+| `/t/[code]`                           | Permanent QR/NFC tipping destination                   |
+| `/r/[restaurantSlug]/[employeeId]`    | Individual employee tipping page                       |
+| `/payment/[reference]`                | Payment receipt and eligible review submission         |
+| `/sign-in`, `/sign-up`, `/onboarding` | Authentication and restaurant setup                    |
 
 Public staff directories and leaderboards are outside the current scope. Individual employee tipping pages remain public.
 
@@ -187,6 +194,7 @@ Prettier is pinned in development dependencies. [`.prettierrc.json`](.prettierrc
 | ------------------------------- | ------------------------------------------------------------ |
 | `pnpm test:e2e`                 | Browser and helper checks; build the app first.              |
 | `pnpm test:db`                  | Repository and provider tests in isolated PGlite, not Neon.  |
+| `pnpm test:functional`          | Database suite followed by the selected browser suite.       |
 | `pnpm db:check`                 | Check the configured database connection.                    |
 | `pnpm db:generate`              | Generate a migration after schema changes.                   |
 | `pnpm db:migrate`               | Apply reviewed migrations to the configured database.        |
@@ -201,6 +209,15 @@ The default browser suite expects an offline-demo build. Setting `CLERK_TEST_LIV
 | [Component structure](docs/code-structure.md) | Feature folders, reusable UI, workspace state, and formatting                     |
 | [Database and access rules](docs/database.md) | Neon setup, schema, tenant isolation, migrations, and tests                       |
 | [Yoco integration](docs/yoco.md)              | Merchant configuration, test checkout, webhooks, receipts, and live prerequisites |
+| [Functional testing](docs/testing.md)         | Superuser console, isolated checks, CLI commands and coverage limits              |
+
+## Pilot readiness
+
+Before a restaurant pilot, follow the [pilot checklist](docs/pilot-checklist.md) for account setup, membership checks, legal review, monitoring, and a database restore drill.
+
+## Functional testing console
+
+The **Testing** sidebar item opens `/dashboard/testing` for the verified Clerk account **jaydenoerson95@gmail.com** only. Run database and browser workflows with per-test results. The public demo and other restaurant accounts cannot access it. Local runner setup, feature coverage and external checks are documented in [the testing guide](docs/testing.md).
 
 ## License
 

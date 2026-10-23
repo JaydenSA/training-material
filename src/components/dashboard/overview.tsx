@@ -4,6 +4,7 @@ import { useWorkspace } from "@/components/workspace-context";
 import { money, ratingFor } from "@/lib/demo";
 import { Avatar, Badge, Heading } from "@/components/ui";
 import { Transactions } from "@/components/dashboard/transactions";
+import { SetupChecklist } from "@/components/dashboard/setup-checklist";
 export function Overview() {
   const { state, mode } = useWorkspace();
   const paid = state.tips.filter(
@@ -45,6 +46,7 @@ export function Overview() {
       >
         Here’s how your team is making a difference.
       </Heading>
+      <SetupChecklist />
       <div className="welcome-banner">
         <div>
           <Badge>THE GREEN SIDE OF GREAT SERVICE</Badge>
