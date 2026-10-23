@@ -75,8 +75,8 @@ export function Access({ page }: { page: string }) {
           <Heading title="Your restaurant is ready.">
             {state.restaurant.name} is saved in your restaurant workspace.
           </Heading>
-          <Link className="button" href="/dashboard">
-            Open dashboard
+          <Link className="button" href="/dashboard/setup">
+            Continue guided setup
           </Link>
         </div>
       );
@@ -152,7 +152,9 @@ export function Access({ page }: { page: string }) {
                 },
               }));
               if (!saved) return;
-              router.push(demoPath ? "/demo/dashboard" : "/dashboard");
+              router.push(
+                demoPath ? "/demo/dashboard/setup" : "/dashboard/setup",
+              );
             }}
           >
             <label>

@@ -26,6 +26,8 @@ For an entirely offline demo, set both `TIPIT_STORAGE=demo` and `NEXT_PUBLIC_AUT
 
 ## Data model
 
+The guided setup route uses the same authorized employee/tag mutation commands as the dashboard. Its progress metadata and practice payment snapshots are browser-only and require no schema migration. New restaurant detail saves continue to `/dashboard/setup`; the connected dashboard remains free of seeded sample records. A guide practice tip explicitly uses demo checkout even when payment mode is live and never inserts a database tip.
+
 - `restaurants`: one per Clerk organization; immutable URL slug, version counter and soft deletion.
 - `employees`: staff profiles, publication flag and archive timestamp. Employees have no required login.
 - `tags`: globally unique opaque code, fixed employee assignment, suspension/deletion timestamps.

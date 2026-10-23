@@ -1505,6 +1505,106 @@ td {
   color: #4d7140;
   border-color: #dae3ce;
 }
+.journey-progress .section-heading h2,
+.journey-content h2 {
+  font:
+    600 20px/1.4 Arial,
+    Helvetica,
+    sans-serif;
+  letter-spacing: -0.4px;
+}
+.journey-progress progress {
+  width: 100%;
+  height: 8px;
+  accent-color: var(--green);
+  margin: 18px 0 22px;
+}
+.journey-progress ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.journey-progress li button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fafbf8;
+  text-align: left;
+  font-size: 12px;
+}
+.journey-progress li button[aria-current="step"] {
+  border-color: var(--green);
+  background: var(--soft);
+  color: var(--green);
+}
+.journey-progress li button span {
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #e7eddf;
+  color: var(--ink);
+}
+.journey-content > .eyebrow {
+  margin-bottom: 12px;
+}
+.journey-content form {
+  max-width: 560px;
+}
+.journey-content > p,
+.journey-content > .info-box {
+  max-width: 760px;
+}
+.journey-content > .badge + h2 {
+  margin-top: 16px;
+}
+.journey-qr {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  margin: 24px 0;
+}
+.journey-qr > div:first-child {
+  flex: 0 0 240px;
+}
+.journey-qr > div:last-child {
+  max-width: 420px;
+  min-width: 0;
+}
+.journey-qr p,
+.journey-disclosure {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 850px) {
+  .journey-progress ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .journey-qr {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .journey-qr > div:first-child {
+    flex-basis: auto;
+  }
+  .journey-progress ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .updates-intro {
   display: flex;
   align-items: center;

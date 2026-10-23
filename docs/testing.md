@@ -48,6 +48,10 @@ Tests use fresh browser storage, demo routes, mocked provider responses and an i
 
 ## Separate integration and manual checks
 
+### Guided first-tip journey
+
+The connected browser suite follows blank demo restaurant setup into Guided setup, creates an employee and tag, checks QR availability and its demo URL, confirms the manual page-check step, and starts the practice payment. It asserts `demo: true` on checkout, simulates success, returns to the guide, verifies 4/4 completion after reload, and checks that the restaurant workspace still contains no financial records. Suspending the tag invalidates later setup completion. Demo routes must make no workspace API calls. Physical scanning, real authenticated saves and provider readiness remain separate checks.
+
 ### Authentication and first-time onboarding
 
 The connected browser suite checks that canonical sign-in/sign-up pages render Clerk and additional demo options, demo sign-in links leave the demo area, and legacy demo auth URLs redirect correctly. It walks through `/demo/onboarding`, verifies the new local restaurant has no seeded entities, checks reload persistence and confirms there are no workspace API requests. Repository tests separately verify a first restaurant save produces an empty persisted workspace in isolated PGlite.

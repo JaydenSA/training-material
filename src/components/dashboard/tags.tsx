@@ -204,7 +204,7 @@ export function Tags() {
     </>
   );
 }
-function QRCode({ code }: { code: string }) {
+export function QRCode({ code }: { code: string }) {
   const [svg, setSvg] = useState("");
   const [error, setError] = useState(false);
   useEffect(() => {

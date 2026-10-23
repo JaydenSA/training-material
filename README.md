@@ -44,6 +44,10 @@ New users register → complete Clerk organization selection/creation → enter 
 
 Keep `NEXT_PUBLIC_AUTH_MODE=auto` (or `clerk` with both keys) and `TIPIT_STORAGE=auto` with Neon configured for real account onboarding. An explicit demo-only build cannot authenticate accounts; its account pages say access is unavailable and keep the demo options visible.
 
+## Guided setup
+
+New restaurant setup now continues to `/dashboard/setup` (or `/demo/dashboard/setup` for the account-free walkthrough). The sidebar and overview checklist also link to the guide. Add an employee or select an existing one, create/select an active tag, check its QR link, then simulate a R10 tip. Employees and tags use normal workspace saves; guide progress stays in this browser. The practice checkout always requests simulation—even with live payments enabled—and never writes restaurant financial records. Confirming a QR page is a manual check, not proof of a physical NFC scan or live payment readiness.
+
 ## Feature status
 
 | Area                  | Status                  | Details                                                                                                                                             |
@@ -176,6 +180,7 @@ See [Component structure](docs/code-structure.md) for shared component APIs and 
 | `/dashboard/print`                    | Printable employee QR cards and table stands           |
 | `/dashboard/activity`                 | Restaurant-scoped change history                       |
 | `/dashboard/updates`                  | Dated product history grouped by development batch     |
+| `/dashboard/setup`                    | Guided employee, tag, QR check and practice-tip setup  |
 | `/dashboard/hardware`                 | Catalogue and unpaid draft orders                      |
 | `/t/[code]`                           | Permanent QR/NFC tipping destination                   |
 | `/r/[restaurantSlug]/[employeeId]`    | Individual employee tipping page                       |

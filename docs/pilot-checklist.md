@@ -12,6 +12,8 @@
 
 ## Before inviting pilot restaurants
 
+Walk through **Guided setup** with a new restaurant: create the first employee, create a tag, open its QR link and check the employee/restaurant identity, then complete the simulated R10 practice tip and return to the guide. Reload to confirm browser progress is retained. Check a suspended tag no longer counts as complete. Repeat a physical scan on the published HTTPS site; demo data on one browser is not available on another phone. Guide completion is a rehearsal and does not replace live provider or NFC verification.
+
 ### Account access and first-time setup
 
 Confirm `/sign-in` and `/sign-up` show Clerk authentication plus the optional demo links. From the demo dashboard, Sign in must leave the demo prefix. With an authorized fresh development account, verify email, complete organization creation/selection, save restaurant details and confirm the first dashboard is empty. Create an employee and tag, then sign out and back in to verify persistence. Do not confuse `/demo/onboarding`, which only replaces browser-local sample data, with this connected setup check. The demo reset restores sample data without affecting connected restaurants.

@@ -47,6 +47,7 @@ export default async function Page({
     "print",
     "activity",
     "updates",
+    "setup",
   ];
   const supported =
     (publicPages.includes(root) && slug.length === 1) ||

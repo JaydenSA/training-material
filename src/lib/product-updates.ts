@@ -11,6 +11,31 @@ export type ProductUpdate = {
  * Historical sources: c280ceb, 0fc995a, f66b6e4 and db205d1. */
 export const productUpdates: readonly ProductUpdate[] = [
   {
+    id: "guided-first-tip",
+    batch: 7,
+    date: "2026-10-23",
+    title: "Your first tip, step by step",
+    summary:
+      "A guided journey from an empty restaurant to a practice checkout.",
+    features: [
+      {
+        title: "Guided setup",
+        description:
+          "New restaurants continue into a four-step guide: add an employee, create or select an active tag, check the QR link, and rehearse a tip.",
+      },
+      {
+        title: "Resume your progress",
+        description:
+          "Employee and tag completion follows workspace data. Scan confirmation and practice progress are kept in this browser and can be resumed after a reload.",
+      },
+      {
+        title: "Safe practice checkout",
+        description:
+          "A R10 practice tip always uses simulation, even if live payments are configured. The guide recognises a successful simulated outcome without adding financial records to the restaurant database.",
+      },
+    ],
+  },
+  {
     id: "authentication-and-onboarding",
     batch: 6,
     date: "2026-10-23",

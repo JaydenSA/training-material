@@ -4,6 +4,8 @@ The app supports merchant-specific Yoco Checkout API credentials, pending tips i
 
 ## Create your account and start in test mode
 
+The Guided setup practice checkout is a separate simulation: it always sends `demo: true`, never creates a Yoco checkout, and stores no financial record in Neon. Completing it does not verify credentials, webhooks, settlement or NFC hardware. Use the actual provider test flow below before selecting live mode.
+
 Restaurant account access uses Clerk on `/sign-in` and `/sign-up`, with demo buttons available alongside authentication. Complete organization and restaurant onboarding before configuring a merchant. The optional `/demo/onboarding` walkthrough creates only an empty browser-local restaurant; it cannot configure a real Yoco merchant or validate live onboarding. Payment mode remains independent of authentication: signing in or creating a restaurant does not enable real charges.
 
 1. Create a Yoco account. In the Yoco App, open Sales → e-Commerce integrations → Checkout API → How to connect. Copy a **test secret key** locally. Never paste it into chat or a public client-side environment variable. [Official setup instructions](https://support.yoco.help/en/articles/739322-yoco-checkout-api).
