@@ -34,6 +34,12 @@ Keep business rules and persistence in `src/lib` and API routes. A shared UI com
 
 Prefer a local component until a pattern is used in multiple places. Add shared components around actual repeated behaviour; avoid one configuration-driven component that handles unrelated page workflows.
 
+## Account and demo boundaries
+
+`public/access.tsx` renders Clerk SignIn/SignUp on canonical account pages, with separate links to the populated demo and blank onboarding demo. `app-link.tsx` preserves the demo prefix for demo navigation except for real sign-in/sign-up links; the catch-all route redirects legacy demo auth URLs. `DatabaseProvider` handles organization selection and first-time persisted restaurant setup. Demo onboarding clears sample entities only when its form is submitted, keeping that walkthrough out of connected storage.
+
+`src/lib/product-updates.ts` stores the dated product batches displayed under **What’s new**. Add entries when shipping user-visible changes; dates describe development batches rather than deployment verification.
+
 ## Formatting and readability
 
 Run `pnpm format` to format the project and `pnpm format:check` to check it without rewriting files. Prettier is pinned as a development dependency and configured in `.prettierrc.json`; `.editorconfig` supplies matching indentation and line-ending settings for editors.

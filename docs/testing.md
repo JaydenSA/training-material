@@ -48,4 +48,10 @@ Tests use fresh browser storage, demo routes, mocked provider responses and an i
 
 ## Separate integration and manual checks
 
+### Authentication and first-time onboarding
+
+The connected browser suite checks that canonical sign-in/sign-up pages render Clerk and additional demo options, demo sign-in links leave the demo area, and legacy demo auth URLs redirect correctly. It walks through `/demo/onboarding`, verifies the new local restaurant has no seeded entities, checks reload persistence and confirms there are no workspace API requests. Repository tests separately verify a first restaurant save produces an empty persisted workspace in isolated PGlite.
+
+For a real end-to-end check, use an authorized new development account: register and verify email, create/select an organization, complete restaurant details and add the first employee and tag. Automated checks do not create real Clerk accounts or send verification emails; that interactive flow still needs a human check.
+
 The automated suite does not certify real Yoco account onboarding, live payments or bank settlement; real authenticated Clerk sessions and delivered invitations; physical NFC/printed QR scans; subscription billing; or full accessibility conformance. Follow [the pilot checklist](pilot-checklist.md) for those checks. Browser authentication rendering tests are separate from proof that the allowlisted account successfully signs in; verify that account manually without sharing credentials.

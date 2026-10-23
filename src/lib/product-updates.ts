@@ -11,6 +11,31 @@ export type ProductUpdate = {
  * Historical sources: c280ceb, 0fc995a, f66b6e4 and db205d1. */
 export const productUpdates: readonly ProductUpdate[] = [
   {
+    id: "authentication-and-onboarding",
+    batch: 6,
+    date: "2026-10-23",
+    title: "Real sign-in, with room to explore",
+    summary:
+      "Account authentication and optional demos now have clear, separate paths.",
+    features: [
+      {
+        title: "Clerk account access",
+        description:
+          "Sign-in and sign-up show Clerk authentication alongside an additional demo button. Sign-in links from the demo return to real account access.",
+      },
+      {
+        title: "New restaurant onboarding",
+        description:
+          "New account holders choose or create a restaurant workspace, then complete restaurant details before opening their empty connected dashboard.",
+      },
+      {
+        title: "Onboarding demo",
+        description:
+          "Preview the first-time restaurant setup without an account. A blank details form creates an empty browser-only restaurant so you can demonstrate adding the first employee and tag.",
+      },
+    ],
+  },
+  {
     id: "product-history",
     batch: 5,
     date: "2026-10-23",

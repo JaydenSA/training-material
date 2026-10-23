@@ -86,6 +86,23 @@ const staff = (id: string): WorkspaceCommand => ({
   color: "#e3eee4",
 });
 
+test("first restaurant onboarding creates an empty persisted workspace without sample records", async () => {
+  expect((await readWorkspace(client, "org_new_owner")).state).toBeNull();
+  const created = await create("org_new_owner");
+  expect(created.state).toMatchObject({
+    restaurant: { name: "org_new_owner" },
+    employees: [],
+    tips: [],
+    tags: [],
+    orders: [],
+    onboarded: true,
+  });
+  const reloaded = await readWorkspace(client, "org_new_owner");
+  expect(reloaded.state?.restaurant.name).toBe("org_new_owner");
+  expect(reloaded.version).toBe(created.version);
+  expect((await readWorkspace(client, "org_other_owner")).state).toBeNull();
+});
+
 test("activity history is restaurant scoped and preserves the verified actor", async () => {
   await create("org_A");
   await create("org_B");

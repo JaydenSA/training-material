@@ -1,5 +1,5 @@
 import { TipitApp } from "@/components/tipit-app";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { canAccessTesting } from "@/lib/testing/auth";
 export default async function Page({
   params,
@@ -18,6 +18,8 @@ export default async function Page({
       : original;
   if (simulation && !(slug[0] === "payment" && slug.length === 2)) notFound();
   const [root] = slug;
+  if (sandbox && ["sign-in", "sign-up"].includes(root) && slug.length === 1)
+    redirect(`/${root}`);
   if (root === "dashboard" && slug[1] === "testing") {
     if (sandbox || slug.length !== 2 || !(await canAccessTesting())) notFound();
     return <TipitApp segments={slug} />;

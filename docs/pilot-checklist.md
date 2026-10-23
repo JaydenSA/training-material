@@ -12,6 +12,10 @@
 
 ## Before inviting pilot restaurants
 
+### Account access and first-time setup
+
+Confirm `/sign-in` and `/sign-up` show Clerk authentication plus the optional demo links. From the demo dashboard, Sign in must leave the demo prefix. With an authorized fresh development account, verify email, complete organization creation/selection, save restaurant details and confirm the first dashboard is empty. Create an employee and tag, then sign out and back in to verify persistence. Do not confuse `/demo/onboarding`, which only replaces browser-local sample data, with this connected setup check. The demo reset restores sample data without affecting connected restaurants.
+
 ### Yoco: requires the owner's account
 
 Create the Yoco account, confirm online-only access, add each restaurant's test credentials, and expose a public HTTPS webhook URL. Follow [Yoco setup](yoco.md). Confirm a successful test payment, failed payment, duplicate webhook, receipt access, review submission, and refund in the real sandbox before selecting live mode. Provider responses are mocked in automated tests; a real Yoco account has not been created or verified by the app.

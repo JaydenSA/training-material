@@ -1930,6 +1930,43 @@ textarea {
   padding: 0 20px;
   min-height: 55vh;
 }
+.auth-entry {
+  width: min(100%, 440px);
+  margin: 64px auto;
+  padding: 0 20px;
+  min-height: 55vh;
+}
+.auth-entry-form,
+.auth-entry-form .cl-rootBox,
+.auth-entry-form .cl-cardBox {
+  width: 100%;
+  max-width: 100%;
+}
+.auth-demo-options {
+  margin-top: 24px;
+}
+.auth-demo-options h2 {
+  font:
+    600 18px/1.4 Arial,
+    Helvetica,
+    sans-serif;
+  letter-spacing: -0.3px;
+  margin-top: 14px;
+}
+.auth-demo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  margin-top: 20px;
+}
+.auth-demo-actions .text-button {
+  font-size: 12px;
+  text-align: center;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+}
 .access-wrap h1 {
   font-family: Georgia, serif;
   margin-top: 20px;

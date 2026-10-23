@@ -36,6 +36,14 @@ _Browser demo data shown; no real customer transactions._
 
 </details>
 
+## Account access and onboarding
+
+`/sign-in` and `/sign-up` use Clerk when configured. Each page also offers **Explore demo** and **Try onboarding demo**. Sign-in links and old `/demo/sign-in` or `/demo/sign-up` URLs lead to canonical account pages, so demo navigation never substitutes for authentication.
+
+New users register → complete Clerk organization selection/creation → enter restaurant details → open an empty connected dashboard. Existing restaurants keep their records. For a client presentation, `/demo/onboarding` starts with blank restaurant details and replaces only this browser’s sample workspace with an empty demo when submitted. It creates no Clerk account or database records; **Settings → Demo controls → Reset demo data** restores the populated example.
+
+Keep `NEXT_PUBLIC_AUTH_MODE=auto` (or `clerk` with both keys) and `TIPIT_STORAGE=auto` with Neon configured for real account onboarding. An explicit demo-only build cannot authenticate accounts; its account pages say access is unavailable and keep the demo options visible.
+
 ## Feature status
 
 | Area                  | Status                  | Details                                                                                                                                             |

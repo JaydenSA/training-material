@@ -16,6 +16,58 @@ export function Access({ page }: { page: string }) {
   const router = useRouter();
   const demoPath = usePathname().startsWith("/demo");
   const authEnabled = useAuthenticationEnabled();
+  if (page === "sign-in" || page === "sign-up")
+    return (
+      <div className="auth-entry">
+        <section
+          className="auth-entry-form"
+          aria-label="Account authentication"
+        >
+          {authEnabled ? (
+            page === "sign-in" ? (
+              <SignIn
+                routing="hash"
+                signUpUrl="/sign-up"
+                fallbackRedirectUrl="/dashboard"
+              />
+            ) : (
+              <SignUp
+                routing="hash"
+                signInUrl="/sign-in"
+                fallbackRedirectUrl="/onboarding"
+              />
+            )
+          ) : (
+            <div className="panel pad">
+              <h1>Account access is unavailable.</h1>
+              <p>
+                Sign-in and registration are not configured on this environment.
+                You can still explore a demo below.
+              </p>
+            </div>
+          )}
+        </section>
+        <section
+          className="panel pad auth-demo-options"
+          aria-label="Demo options"
+        >
+          <Badge muted>NO ACCOUNT NEEDED</Badge>
+          <h2>Just looking around?</h2>
+          <p>
+            Explore a sample restaurant, or try setting up a new one. Demo
+            changes stay in your browser.
+          </p>
+          <div className="auth-demo-actions">
+            <Link className="button secondary" href="/demo/dashboard">
+              Explore demo
+            </Link>
+            <Link className="text-button" href="/demo/onboarding">
+              Try onboarding demo
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
   if (authEnabled) {
     if (mode === "database" && page === "onboarding")
       return (
@@ -34,26 +86,6 @@ export function Access({ page }: { page: string }) {
           <TaskChooseOrganization redirectUrlComplete="/onboarding" />
         </div>
       );
-    if (page === "sign-in")
-      return (
-        <div className="access-wrap">
-          <SignIn
-            routing="hash"
-            signUpUrl="/sign-up"
-            fallbackRedirectUrl="/dashboard"
-          />
-        </div>
-      );
-    if (page === "sign-up")
-      return (
-        <div className="access-wrap">
-          <SignUp
-            routing="hash"
-            signInUrl="/sign-in"
-            fallbackRedirectUrl="/onboarding"
-          />
-        </div>
-      );
     if (page === "account")
       return (
         <div className="public-content">
@@ -69,34 +101,57 @@ export function Access({ page }: { page: string }) {
         </Badge>
         <h1>
           {page === "onboarding"
-            ? "Meet your restaurant’s new little helper."
+            ? "Set up your restaurant demo."
             : page === "account"
               ? "Your demo account."
               : "Welcome to a little more appreciation."}
         </h1>
         <p>
-          {page === "account"
-            ? "Alex Morgan · Restaurant owner. This is a sample identity, not an authenticated account."
-            : authEnabled
-              ? "Your account is signed in. Set up a sample restaurant workspace to explore the product."
-              : "Explore the full restaurant experience without creating an account. No credentials are collected in this demo."}
+          {page === "onboarding" && demoPath
+            ? "Experience a new restaurant’s first steps. Submitting this form replaces the sample workspace in this browser with an empty restaurant. No account is created and no database records are changed."
+            : page === "account"
+              ? "Alex Morgan · Restaurant owner. This is a sample identity, not an authenticated account."
+              : authEnabled
+                ? "Your account is signed in. Set up a sample restaurant workspace to explore the product."
+                : "Explore the full restaurant experience without creating an account. No credentials are collected in this demo."}
         </p>
         {page === "onboarding" ? (
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               const data = new FormData(e.currentTarget);
               const name = String(data.get("name")).trim();
               if (!name) return;
-              update((s) => ({
+              const saved = await update((s) => ({
                 ...s,
+                ...(demoPath
+                  ? {
+                      employees: [],
+                      tags: [],
+                      tips: [],
+                      orders: [],
+                      activity: [],
+                      plan: "Restaurant",
+                    }
+                  : {}),
                 onboarded: true,
                 restaurant: {
                   ...s.restaurant,
                   name,
                   city: String(data.get("city")),
+                  email: String(data.get("email")),
+                  ...(demoPath
+                    ? {
+                        slug:
+                          name
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, "-")
+                            .replace(/^-|-$/g, "") || "demo-restaurant",
+                      }
+                    : {}),
                 },
               }));
+              if (!saved) return;
               router.push(demoPath ? "/demo/dashboard" : "/dashboard");
             }}
           >
@@ -106,7 +161,17 @@ export function Access({ page }: { page: string }) {
                 name="name"
                 required
                 maxLength={100}
-                defaultValue={state.restaurant.name}
+                defaultValue={demoPath ? "" : state.restaurant.name}
+              />
+            </label>
+            <label>
+              Contact email
+              <input
+                name="email"
+                type="email"
+                required
+                maxLength={254}
+                defaultValue={demoPath ? "" : state.restaurant.email}
               />
             </label>
             <label>
@@ -114,19 +179,21 @@ export function Access({ page }: { page: string }) {
               <input
                 name="city"
                 required
-                defaultValue={state.restaurant.city}
+                maxLength={100}
+                defaultValue={demoPath ? "" : state.restaurant.city}
               />
             </label>
-            <button className="button full">Open demo workspace ↗</button>
+            <button className="button full">Create demo restaurant</button>
           </form>
         ) : (
-          <Link href="/dashboard" className="button full">
-            Enter demo workspace ↗
+          <Link href="/demo/dashboard" className="button full">
+            Enter demo workspace
           </Link>
         )}
         <div className="info-box">
-          Restaurant workspace data is currently a browser-local demo. Clerk
-          authenticates owners and managers; employees do not need accounts.
+          This preview uses browser-local data. To create a connected
+          restaurant, <Link href="/sign-up">create an account</Link> or{" "}
+          <Link href="/sign-in">sign in</Link>. Employees do not need accounts.
         </div>
       </section>
     </div>

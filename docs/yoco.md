@@ -4,6 +4,8 @@ The app supports merchant-specific Yoco Checkout API credentials, pending tips i
 
 ## Create your account and start in test mode
 
+Restaurant account access uses Clerk on `/sign-in` and `/sign-up`, with demo buttons available alongside authentication. Complete organization and restaurant onboarding before configuring a merchant. The optional `/demo/onboarding` walkthrough creates only an empty browser-local restaurant; it cannot configure a real Yoco merchant or validate live onboarding. Payment mode remains independent of authentication: signing in or creating a restaurant does not enable real charges.
+
 1. Create a Yoco account. In the Yoco App, open Sales → e-Commerce integrations → Checkout API → How to connect. Copy a **test secret key** locally. Never paste it into chat or a public client-side environment variable. [Official setup instructions](https://support.yoco.help/en/articles/739322-yoco-checkout-api).
 2. Sign in to Tipit, complete restaurant onboarding, and open **Settings → Payments**. Copy the restaurant workspace ID. This is the Clerk organization ID, not an employee ID.
 3. Set `NEXT_PUBLIC_APP_URL` in `.env.local` to your publicly reachable HTTPS deployment or tunnel origin. Yoco cannot deliver webhooks to localhost. Use that same origin when testing checkout so the receipt cookie belongs to the return URL's host.
