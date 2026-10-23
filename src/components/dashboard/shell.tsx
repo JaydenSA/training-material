@@ -16,6 +16,7 @@ import { Reports } from "@/components/dashboard/reports";
 import { PrintMaterials } from "@/components/dashboard/print-materials";
 import { Activity } from "@/components/dashboard/activity";
 import { Testing } from "@/components/dashboard/testing";
+import { ProductUpdates } from "@/components/dashboard/updates";
 import { usePathname } from "next/navigation";
 const nav = [
   ["Overview", "/dashboard", "◫"],
@@ -28,6 +29,7 @@ const nav = [
   ["Hardware shop", "/dashboard/hardware", "▱"],
   ["Activity", "/dashboard/activity", "◷"],
   ["Settings", "/dashboard/settings", "⚙"],
+  ["What’s new", "/dashboard/updates", "✧"],
 ];
 export function Dashboard({ section, id }: { section: string; id?: string }) {
   const { state, ready, loadError, retry } = useWorkspace();
@@ -169,6 +171,8 @@ export function Dashboard({ section, id }: { section: string; id?: string }) {
             <PrintMaterials />
           ) : section === "activity" ? (
             <Activity />
+          ) : section === "updates" ? (
+            <ProductUpdates />
           ) : (
             <Empty>
               Page unavailable.{" "}
