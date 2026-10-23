@@ -2,6 +2,7 @@ import { randomUUID, createHash } from "node:crypto";
 import type { DemoState } from "../demo";
 import { HttpError } from "../http-error";
 import { catalog, type WorkspaceCommand } from "../workspace-contract";
+import { mapModeration } from "./moderation-repository";
 export interface SQLClient {
   query(
     text: string,
@@ -25,31 +26,37 @@ export async function readWorkspace(
     )
   ).rows[0];
   if (!restaurant) return { state: null, version: 0 };
-  const [staff, payments, links, orders, subscription] = await Promise.all([
-    client.query(
-      "SELECT id,name,role,bio,color,deleted_at FROM employees WHERE restaurant_id=$1 ORDER BY created_at,id",
-      [restaurant.id],
-    ),
-    client.query(
-      "SELECT id,employee_id,amount_cents,status,created_at,rating,review,processing_mode,refunded_amount_cents FROM tips WHERE restaurant_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC",
-      [restaurant.id],
-    ),
-    client.query(
-      "SELECT code,employee_id,format,suspended_at,deleted_at FROM tags WHERE restaurant_id=$1 ORDER BY created_at,id",
-      [restaurant.id],
-    ),
-    client.query(
-      "SELECT id,product,quantity,amount_cents,created_at FROM hardware_orders WHERE restaurant_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC",
-      [restaurant.id],
-    ),
-    client.query(
-      "SELECT status FROM subscriptions WHERE restaurant_id=$1 AND deleted_at IS NULL",
-      [restaurant.id],
-    ),
-  ]);
+  const [staff, payments, links, orders, subscription, moderation] =
+    await Promise.all([
+      client.query(
+        "SELECT id,name,role,bio,color,deleted_at FROM employees WHERE restaurant_id=$1 ORDER BY created_at,id",
+        [restaurant.id],
+      ),
+      client.query(
+        "SELECT id,employee_id,amount_cents,status,created_at,rating,review,processing_mode,refunded_amount_cents FROM tips WHERE restaurant_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC",
+        [restaurant.id],
+      ),
+      client.query(
+        "SELECT code,employee_id,format,suspended_at,deleted_at FROM tags WHERE restaurant_id=$1 ORDER BY created_at,id",
+        [restaurant.id],
+      ),
+      client.query(
+        "SELECT id,product,quantity,amount_cents,created_at FROM hardware_orders WHERE restaurant_id=$1 AND deleted_at IS NULL ORDER BY created_at DESC",
+        [restaurant.id],
+      ),
+      client.query(
+        "SELECT status FROM subscriptions WHERE restaurant_id=$1 AND deleted_at IS NULL",
+        [restaurant.id],
+      ),
+      client.query(
+        "SELECT DISTINCT ON(tip_id) * FROM review_moderations WHERE restaurant_id=$1 ORDER BY tip_id,sequence DESC",
+        [restaurant.id],
+      ),
+    ]);
   return {
     version: Number(restaurant.version),
     state: {
+      moderations: moderation.rows.map(mapModeration),
       restaurant: {
         name: String(restaurant.name),
         slug: String(restaurant.slug),

@@ -18,6 +18,8 @@ import { Activity } from "@/components/dashboard/activity";
 import { Testing } from "@/components/dashboard/testing";
 import { ProductUpdates } from "@/components/dashboard/updates";
 import { GuidedSetup } from "@/components/dashboard/guided-setup";
+import { OperationalAlerts } from "@/components/dashboard/alerts";
+import { EmployeeComparisons } from "@/components/dashboard/comparisons";
 import { usePathname } from "next/navigation";
 const nav = [
   ["Overview", "/dashboard", "◫"],
@@ -26,6 +28,8 @@ const nav = [
   ["Tips & transactions", "/dashboard/tips", "↗"],
   ["Ratings", "/dashboard/ratings", "☆"],
   ["Reports", "/dashboard/reports", "▤"],
+  ["Compare employees", "/dashboard/comparisons", "⇄"],
+  ["Operational alerts", "/dashboard/alerts", "◉"],
   ["QR & NFC tags", "/dashboard/tags", "▦"],
   ["Print QR materials", "/dashboard/print", "▦"],
   ["Hardware shop", "/dashboard/hardware", "▱"],
@@ -177,6 +181,10 @@ export function Dashboard({ section, id }: { section: string; id?: string }) {
             <ProductUpdates />
           ) : section === "setup" ? (
             <GuidedSetup />
+          ) : section === "comparisons" ? (
+            <EmployeeComparisons />
+          ) : section === "alerts" ? (
+            <OperationalAlerts />
           ) : (
             <Empty>
               Page unavailable.{" "}

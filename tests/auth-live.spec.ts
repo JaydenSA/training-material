@@ -222,7 +222,7 @@ test("public demo dashboard stays isolated from restaurant APIs", async ({
   ).toBeVisible();
   await page
     .locator(".sidebar nav")
-    .getByRole("link", { name: "Employees" })
+    .getByRole("link", { name: "Employees", exact: true })
     .click();
   await expect(page).toHaveURL(/\/demo\/dashboard\/employees$/);
   await expect(page.getByText("Sarah Jacobs").first()).toBeVisible();

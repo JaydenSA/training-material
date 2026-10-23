@@ -11,6 +11,36 @@ export type ProductUpdate = {
  * Historical sources: c280ceb, 0fc995a, f66b6e4 and db205d1. */
 export const productUpdates: readonly ProductUpdate[] = [
   {
+    id: "restaurant-management-tools",
+    batch: 8,
+    date: "2026-10-24",
+    title: "More control over everyday operations",
+    summary:
+      "Review moderation, bulk QR tools, operational alerts and employee comparisons.",
+    features: [
+      {
+        title: "Review moderation",
+        description:
+          "Managers can flag written reviews; owners can hide or restore text with a reason. Original words, star ratings and payment amounts are preserved, with actor and timestamp history.",
+      },
+      {
+        title: "Bulk tag tools",
+        description:
+          "Create up to 20 tags in one batch, activate or suspend selected tags, and download active QR codes together as a ZIP archive.",
+      },
+      {
+        title: "Operational alerts",
+        description:
+          "Review missing or mismatched payment configuration, recorded failed checkouts and confirmations delayed over 30 minutes. Live and test outcomes are labelled separately; no external messages are sent.",
+      },
+      {
+        title: "Employee comparisons",
+        description:
+          "Compare up to six employees across the same dates, including net tips, previous-period changes, star averages and review counts. Download the comparison as CSV.",
+      },
+    ],
+  },
+  {
     id: "guided-first-tip",
     batch: 7,
     date: "2026-10-23",

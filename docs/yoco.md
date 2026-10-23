@@ -4,6 +4,8 @@ The app supports merchant-specific Yoco Checkout API credentials, pending tips i
 
 ## Create your account and start in test mode
 
+**Operational alerts** reads configured mode/merchant readiness and saved failed/delayed checkout outcomes. It labels live and test counts separately and shows the last processed verified-webhook timestamp. It does not call Yoco to validate credentials, inspect provider delivery logs or retry payments. Investigate pending payments in the provider dashboard before manual follow-up; delayed confirmation is a signal, not proof of webhook failure. No external alert emails are configured.
+
 The Guided setup practice checkout is a separate simulation: it always sends `demo: true`, never creates a Yoco checkout, and stores no financial record in Neon. Completing it does not verify credentials, webhooks, settlement or NFC hardware. Use the actual provider test flow below before selecting live mode.
 
 Restaurant account access uses Clerk on `/sign-in` and `/sign-up`, with demo buttons available alongside authentication. Complete organization and restaurant onboarding before configuring a merchant. The optional `/demo/onboarding` walkthrough creates only an empty browser-local restaurant; it cannot configure a real Yoco merchant or validate live onboarding. Payment mode remains independent of authentication: signing in or creating a restaurant does not enable real charges.

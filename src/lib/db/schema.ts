@@ -12,6 +12,7 @@ import {
   check,
   foreignKey,
   primaryKey,
+  bigserial,
 } from "drizzle-orm/pg-core";
 const createdAt = () =>
   timestamp("created_at", { withTimezone: true }).defaultNow().notNull();
@@ -121,6 +122,7 @@ export const tips = pgTable(
       columns: [t.employeeId, t.restaurantId],
       foreignColumns: [employees.id, employees.restaurantId],
     }),
+    unique("tips_restaurant_id_unique").on(t.restaurantId, t.id),
     check("tip_amount_bounds", sql`${t.amount} between 500 and 1000000`),
     check("tip_processing_mode", sql`${t.processingMode} in ('test','live')`),
     check(
@@ -146,6 +148,42 @@ export const tips = pgTable(
     ),
   ],
 );
+export const reviewModerations = pgTable(
+  "review_moderations",
+  {
+    id: uuid("id").primaryKey(),
+    sequence: bigserial("sequence", { mode: "number" }).notNull(),
+    restaurantId: uuid("restaurant_id")
+      .notNull()
+      .references(() => restaurants.id),
+    tipId: uuid("tip_id").notNull(),
+    action: text("action").notNull(),
+    reason: text("reason").notNull(),
+    actorId: text("actor_id").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({
+      name: "moderation_tip_same_restaurant",
+      columns: [t.restaurantId, t.tipId],
+      foreignColumns: [tips.restaurantId, tips.id],
+    }),
+    index("moderation_tip_sequence_idx").on(
+      t.restaurantId,
+      t.tipId,
+      t.sequence,
+    ),
+    check(
+      "moderation_action_valid",
+      sql`${t.action} in ('flag','hide','restore')`,
+    ),
+    check(
+      "moderation_reason_valid",
+      sql`char_length(trim(${t.reason})) between 5 and 500`,
+    ),
+  ],
+);
+
 export const webhookEvents = pgTable(
   "webhook_events",
   {

@@ -50,6 +50,17 @@ New restaurant setup now continues to `/dashboard/setup` (or `/demo/dashboard/se
 
 ## Feature status
 
+### Restaurant management tools
+
+- **Ratings → Moderate:** flag written text, or hide/restore it as an owner. A reason is required; original reviews, stars and amounts remain unchanged. History records actors and times. Simulated reviews in a connected dashboard remain read-only; the public demo supports local moderation.
+- **QR & NFC tags → Bulk tag tools:** create up to 20 tags atomically, manage selected statuses, and download active QR codes as a ZIP archive. Archived employees’ tags cannot be activated.
+- **Operational alerts:** in-app configuration checks and recorded failures/delays, refreshed every 30 seconds while visible. This is not a provider connectivity probe or an email notification service.
+- **Compare employees:** select up to six staff, filter dates, compare the previous equal-length period and export CSV. Provider test payments and browser simulations stay out of connected comparisons. Counts are not adjusted for shifts or guest traffic, and are not a performance ranking.
+
+**Database update:** apply `pnpm db:migrate` before deploying this batch. Migration `0004_review_moderation` adds a moderation event table and a same-restaurant foreign-key constraint. It does not seed or remove restaurant data. The connected development database has been migrated; other deployment databases must be migrated separately.
+
+### Feature status overview
+
 | Area                  | Status                  | Details                                                                                                                                             |
 | --------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Landing page          | **Built**               | Includes pricing and how it works. Prices are illustrative.                                                                                         |
@@ -181,6 +192,8 @@ See [Component structure](docs/code-structure.md) for shared component APIs and 
 | `/dashboard/activity`                 | Restaurant-scoped change history                       |
 | `/dashboard/updates`                  | Dated product history grouped by development batch     |
 | `/dashboard/setup`                    | Guided employee, tag, QR check and practice-tip setup  |
+| `/dashboard/alerts`                   | Payment configuration and recorded outcome alerts      |
+| `/dashboard/comparisons`              | Employee tip/review comparisons and CSV export         |
 | `/dashboard/hardware`                 | Catalogue and unpaid draft orders                      |
 | `/t/[code]`                           | Permanent QR/NFC tipping destination                   |
 | `/r/[restaurantSlug]/[employeeId]`    | Individual employee tipping page                       |

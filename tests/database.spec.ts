@@ -5,6 +5,11 @@ import { join } from "node:path";
 import { randomUUID, createHmac } from "node:crypto";
 import { readActivity } from "../src/lib/db/activity-repository";
 import {
+  moderateReview,
+  moderationHistory,
+} from "../src/lib/db/moderation-repository";
+import { readOperations } from "../src/lib/db/operations-repository";
+import {
   applyYocoEvent,
   checkoutTarget,
   prepareCheckout,
@@ -101,6 +106,161 @@ test("first restaurant onboarding creates an empty persisted workspace without s
   expect(reloaded.state?.restaurant.name).toBe("org_new_owner");
   expect(reloaded.version).toBe(created.version);
   expect((await readWorkspace(client, "org_other_owner")).state).toBeNull();
+});
+
+test("review moderation preserves originals, enforces owner actions and isolates tenant history", async () => {
+  await create("org_A");
+  await create("org_B");
+  const employeeId = randomUUID(),
+    tipId = randomUUID();
+  await mutate("org_A", 1, [staff(employeeId)]);
+  const restaurantId = (
+    await client.query("SELECT id FROM restaurants WHERE clerk_org_id='org_A'")
+  ).rows[0].id;
+  await client.query(
+    "INSERT INTO tips(id,restaurant_id,employee_id,amount_cents,status,rating,review,rated_at,receipt_token_hash) VALUES($1,$2,$3,5000,'paid',2,'Original customer words',now(),'test-hash')",
+    [tipId, restaurantId, employeeId],
+  );
+  const manager = {
+    organizationId: "org_A",
+    userId: "manager_actor",
+    isOwner: false,
+  };
+  const flag = {
+    requestId: randomUUID(),
+    tipId,
+    action: "flag" as const,
+    reason: "Inappropriate personal information",
+  };
+  await moderateReview(transaction, manager, flag);
+  await moderateReview(transaction, manager, flag);
+  expect((await moderationHistory(client, "org_A", tipId)).events).toHaveLength(
+    1,
+  );
+  await expect(
+    moderateReview(transaction, manager, {
+      ...flag,
+      requestId: randomUUID(),
+      action: "hide",
+    }),
+  ).rejects.toMatchObject({ status: 403 });
+  const owner = { ...manager, userId: "owner_actor", isOwner: true };
+  await expect(
+    moderateReview(
+      transaction,
+      { ...owner, organizationId: "org_B" },
+      { ...flag, requestId: randomUUID(), action: "hide" },
+    ),
+  ).rejects.toMatchObject({ status: 404 });
+  await moderateReview(transaction, owner, {
+    ...flag,
+    requestId: randomUUID(),
+    action: "hide",
+    reason: "Contains personal contact details",
+  });
+  expect(
+    (await readWorkspace(client, "org_A")).state?.moderations?.[0].action,
+  ).toBe("hide");
+  await expect(
+    moderateReview(transaction, manager, { ...flag, requestId: randomUUID() }),
+  ).rejects.toMatchObject({ status: 409 });
+  await moderateReview(transaction, owner, {
+    ...flag,
+    requestId: randomUUID(),
+    action: "restore",
+    reason: "Flag reviewed and text restored",
+  });
+  const history = await moderationHistory(client, "org_A", tipId);
+  expect(history.events.map((event) => event.action)).toEqual([
+    "restore",
+    "hide",
+    "flag",
+  ]);
+  expect(history.events[0].actorId).toBe("owner_actor");
+  expect((await moderationHistory(client, "org_B", tipId)).events).toEqual([]);
+  const original = (
+    await client.query(
+      "SELECT amount_cents,rating,review FROM tips WHERE id=$1",
+      [tipId],
+    )
+  ).rows[0];
+  expect(original).toEqual({
+    amount_cents: 5000,
+    rating: 2,
+    review: "Original customer words",
+  });
+  expect(
+    (await readActivity(client, "org_A")).events.filter((event) =>
+      event.action.startsWith("review."),
+    ),
+  ).toHaveLength(3);
+  const other = (
+    await client.query("SELECT id FROM restaurants WHERE clerk_org_id='org_B'")
+  ).rows[0].id;
+  await expect(
+    client.query(
+      "INSERT INTO review_moderations(id,restaurant_id,tip_id,action,reason,actor_id) VALUES($1,$2,$3,'hide','Foreign tenant action','actor')",
+      [randomUUID(), other, tipId],
+    ),
+  ).rejects.toMatchObject({ code: "23503" });
+});
+
+test("operational counts are tenant-scoped and keep live/test outcomes separate", async () => {
+  for (const org of ["org_A", "org_B"]) {
+    await create(org);
+    const employeeId = randomUUID();
+    await mutate(org, 1, [staff(employeeId)]);
+    const restaurantId = (
+      await client.query("SELECT id FROM restaurants WHERE clerk_org_id=$1", [
+        org,
+      ])
+    ).rows[0].id;
+    for (const [status, mode] of [
+      ["failed", "live"],
+      ["failed", "test"],
+      ["pending", "live"],
+    ])
+      await client.query(
+        "INSERT INTO tips(id,restaurant_id,employee_id,amount_cents,status,processing_mode,receipt_token_hash,created_at) VALUES($1,$2,$3,5000,$4,$5,'hash',now()-interval '1 hour')",
+        [randomUUID(), restaurantId, employeeId, status, mode],
+      );
+  }
+  expect(await readOperations(client, "org_A")).toMatchObject({
+    liveFailed: 1,
+    testFailed: 1,
+    livePending: 1,
+    testPending: 0,
+    lastWebhook: null,
+  });
+  expect(await readOperations(client, "org_unknown")).toMatchObject({
+    liveFailed: 0,
+    testFailed: 0,
+    livePending: 0,
+  });
+});
+
+test("bulk tag batches roll back atomically when any employee is invalid", async () => {
+  await create("org_A");
+  const employeeId = randomUUID();
+  await mutate("org_A", 1, [staff(employeeId)]);
+  await expect(
+    mutate("org_A", 2, [
+      {
+        type: "tag.create",
+        code: "BULK-VALID",
+        employeeId,
+        format: "QR stand",
+      },
+      {
+        type: "tag.create",
+        code: "BULK-INVALID",
+        employeeId: randomUUID(),
+        format: "NFC card",
+      },
+    ]),
+  ).rejects.toBeDefined();
+  expect((await readWorkspace(client, "org_A")).state?.tags).toEqual([]);
+  expect((await readWorkspace(client, "org_A")).version).toBe(2);
 });
 
 test("activity history is restaurant scoped and preserves the verified actor", async () => {
