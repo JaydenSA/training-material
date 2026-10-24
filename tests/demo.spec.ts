@@ -171,6 +171,29 @@ test("mobile landing and dashboard fit the viewport", async ({ page }) => {
     path: "test-results/landing-mobile.png",
     fullPage: true,
   });
+  await page.setViewportSize({ width: 320, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  const siteMenu = page.getByRole("button", {
+    name: "Toggle site navigation",
+    exact: true,
+  });
+  await siteMenu.click();
+  await expect(
+    page.getByRole("navigation", { name: "Mobile website navigation" }),
+  ).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Mobile website navigation" })
+    .getByRole("link", { name: "Pricing", exact: true })
+    .click();
+  await expect(siteMenu).toHaveAttribute("aria-expanded", "false");
+  await siteMenu.click();
+  await page.keyboard.press("Escape");
+  await expect(siteMenu).toBeFocused();
   await page.goto("/demo/dashboard");
   await expect(
     page.getByRole("heading", { name: "A little thanks, adding up." }),
@@ -185,6 +208,7 @@ test("mobile landing and dashboard fit the viewport", async ({ page }) => {
     fullPage: true,
   });
   await page.getByRole("button", { name: "Toggle navigation" }).click();
+  await page.locator(".sidebar summary", { hasText: "People" }).click();
   await page.getByRole("link", { name: "Employees", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Your people. Their appreciation." }),

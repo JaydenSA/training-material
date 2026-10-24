@@ -4,6 +4,8 @@ The app supports merchant-specific Yoco Checkout API credentials, pending tips i
 
 ## Create your account and start in test mode
 
+Payment configuration is reached through **Workspace → Settings → Payments**; operational status is under **Payments & reports → Operational alerts**. On mobile, open the dashboard drawer first. Grouping changes navigation only and does not change merchant configuration or payment mode.
+
 **Operational alerts** reads configured mode/merchant readiness and saved failed/delayed checkout outcomes. It labels live and test counts separately and shows the last processed verified-webhook timestamp. It does not call Yoco to validate credentials, inspect provider delivery logs or retry payments. Investigate pending payments in the provider dashboard before manual follow-up; delayed confirmation is a signal, not proof of webhook failure. No external alert emails are configured.
 
 The Guided setup practice checkout is a separate simulation: it always sends `demo: true`, never creates a Yoco checkout, and stores no financial record in Neon. Completing it does not verify credentials, webhooks, settlement or NFC hardware. Use the actual provider test flow below before selecting live mode.

@@ -2,7 +2,7 @@
 import Link from "@/components/app-link";
 import type { ReactNode } from "react";
 import type { Employee } from "@/lib/demo";
-import { AuthControls } from "@/components/auth-controls";
+import { SiteHeader } from "@/components/site-header";
 import { useWorkspace } from "@/components/workspace-context";
 export function Logo() {
   return (
@@ -73,7 +73,12 @@ export function DemoNotice() {
   return (
     <div className="demo-notice">
       <span className="dot" />{" "}
-      {mode === "database" ? "Restaurant workspace" : "Demo workspace"}{" "}
+      <span className="notice-desktop">
+        {mode === "database" ? "Restaurant workspace" : "Demo workspace"}
+      </span>
+      <span className="notice-mobile">
+        {mode === "database" ? "Connected" : "Demo"}
+      </span>{" "}
       <span className="notice-detail">
         {mode === "database" ? "· PostgreSQL connected" : "· No real payments"}
       </span>
@@ -81,16 +86,7 @@ export function DemoNotice() {
   );
 }
 export function Header() {
-  return (
-    <header className="public-header">
-      <Logo />
-      <nav>
-        <Link href="/#how-it-works">How it works</Link>
-        <Link href="/#pricing">Pricing</Link>
-      </nav>
-      <AuthControls />
-    </header>
-  );
+  return <SiteHeader brand={<Logo />} />;
 }
 export function Footer() {
   return (

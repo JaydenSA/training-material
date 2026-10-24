@@ -12,6 +12,8 @@
 
 ## Before inviting pilot restaurants
 
+Check mobile navigation on the published site: open the website menu, follow a link, and close it with Escape. In the dashboard, expand each group and reach the existing pages, open the account/workspace controls, and close the drawer via its close button, backdrop and Escape. Keyboard focus must stay in the open drawer, return to the trigger on dismissal, and never enter the closed drawer. Resize to desktop and confirm background scrolling is restored.
+
 ### Management tools and deployment
 
 Apply `0004_review_moderation` with `pnpm db:migrate` to the target database. Verify managers can flag but cannot hide/restore; owners can hide/restore with a reason; and original text, star aggregates and financial totals remain intact. Another restaurant must not access that history. Bulk-create a small tag batch, inspect its ZIP and scan an actual printed QR; archived employees’ tags must not activate. Review live/test alerts and compare known employee totals over fixed dates. Alerts are in-app record/configuration signals, not live connectivity certification or email notifications.

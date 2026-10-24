@@ -48,9 +48,11 @@ function ClerkControls({ compact }: { compact: boolean }) {
       <Link href="/sign-in" className="auth-signin">
         Sign in
       </Link>
-      <Link href="/sign-up" className="button small">
-        Get started
-      </Link>
+      {!compact && (
+        <Link href="/sign-up" className="button small">
+          Get started
+        </Link>
+      )}
     </div>
   );
 }

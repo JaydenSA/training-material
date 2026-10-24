@@ -48,6 +48,10 @@ Tests use fresh browser storage, demo routes, mocked provider responses and an i
 
 ## Separate integration and manual checks
 
+### Grouped and mobile navigation
+
+Dashboard groups retain the existing URLs and link count; tests open People before navigating to its nested employee/rating pages. The mobile checks exercise the public menu, closing after a link, Escape focus recovery, and the dashboard drawer. The active dashboard group opens automatically. Desktop/mobile screenshots should also confirm a compact top bar, reachable account controls inside the drawer, hidden-menu links excluded from keyboard focus, and no viewport overflow.
+
 ### Management feature checks
 
 `management.spec.ts` exercises local moderation and unchanged ratings, persisted restoration, bulk creation and ZIP contents, inactive-tag download rejection, comparison filters/exports and explicit demo alerts. It checks signed-out moderation/operational API denial and calculation exclusion of provider tests. Database checks cover owner/manager rules, original preservation, replay safety, cross-restaurant moderation constraints/history, scoped live/test counts and atomic rollback of invalid bulk batches. The Testing console includes these suites automatically.

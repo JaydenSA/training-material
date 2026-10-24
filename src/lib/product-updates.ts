@@ -11,6 +11,25 @@ export type ProductUpdate = {
  * Historical sources: c280ceb, 0fc995a, f66b6e4 and db205d1. */
 export const productUpdates: readonly ProductUpdate[] = [
   {
+    id: "simpler-mobile-navigation",
+    batch: 9,
+    date: "2026-10-24",
+    title: "A little less menu, a little more room",
+    summary: "Grouped dashboard navigation and a calmer mobile header.",
+    features: [
+      {
+        title: "Grouped dashboard sections",
+        description:
+          "Overview stays visible while related pages are grouped under People, Payments & reports, Tipping tools and Workspace. The current page’s group opens automatically.",
+      },
+      {
+        title: "Simpler mobile navigation",
+        description:
+          "Website links move into one menu. Dashboard account and workspace controls live in a drawer with a close button, backdrop and keyboard support, leaving a compact page title and status in the top bar.",
+      },
+    ],
+  },
+  {
     id: "restaurant-management-tools",
     batch: 8,
     date: "2026-10-24",

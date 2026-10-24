@@ -52,6 +52,8 @@ Composite foreign keys prevent an employee from being assigned to a different re
 
 ## API and authorization
 
+Navigation is grouped under People, Payments & reports, Tipping tools and Workspace. These groups are presentation only: existing route permissions, organization scoping and repository validation still apply independently. On mobile, organization switching and account controls are in the dashboard drawer.
+
 `GET /api/workspace` and `POST /api/workspace` require an authenticated active organization and an owner/admin or manager role. Restaurant identity comes only from Clerk's verified session. The X-Tipit-Organization header is a consistency assertion, never authorization: a mismatch with the active organization is rejected.
 
 Writes accept a strict list of validated commands, not an arbitrary database record or browser snapshot. Every query is scoped to the authorized restaurant. Commands run in one transaction under a per-organization advisory lock, verify the restaurant version, write audit records and record the idempotency reference. Stale versions return 409 instead of overwriting another session. A repeated request ID with a different payload is rejected.
