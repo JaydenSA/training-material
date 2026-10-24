@@ -21,22 +21,10 @@ import { GuidedSetup } from "@/components/dashboard/guided-setup";
 import { OperationalAlerts } from "@/components/dashboard/alerts";
 import { EmployeeComparisons } from "@/components/dashboard/comparisons";
 import { usePathname } from "next/navigation";
-const nav = [
-  ["Overview", "/dashboard", "◫"],
-  ["Guided setup", "/dashboard/setup", "◇"],
-  ["Employees", "/dashboard/employees", "♧"],
-  ["Tips & transactions", "/dashboard/tips", "↗"],
-  ["Ratings", "/dashboard/ratings", "☆"],
-  ["Reports", "/dashboard/reports", "▤"],
-  ["Compare employees", "/dashboard/comparisons", "⇄"],
-  ["Operational alerts", "/dashboard/alerts", "◉"],
-  ["QR & NFC tags", "/dashboard/tags", "▦"],
-  ["Print QR materials", "/dashboard/print", "▦"],
-  ["Hardware shop", "/dashboard/hardware", "▱"],
-  ["Activity", "/dashboard/activity", "◷"],
-  ["Settings", "/dashboard/settings", "⚙"],
-  ["What’s new", "/dashboard/updates", "✧"],
-];
+import {
+  DashboardNavigation,
+  dashboardNavigation,
+} from "@/components/dashboard/navigation";
 export function Dashboard({ section, id }: { section: string; id?: string }) {
   const { state, ready, loadError, retry } = useWorkspace();
   const [menu, setMenu] = useState(false);
@@ -54,29 +42,85 @@ export function Dashboard({ section, id }: { section: string; id?: string }) {
       .catch(() => setTestingAllowed(false));
     return () => controller.abort();
   }, [pathname]);
-  const navigation =
-    testingAllowed && !pathname.startsWith("/demo/")
-      ? [...nav, ["Testing", "/dashboard/testing", "✓"]]
-      : nav;
   const menuButton = useRef<HTMLButtonElement>(null);
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const sidebar = useRef<HTMLElement>(null);
   useEffect(() => {
     if (!menu) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButton.current?.focus();
+    const screen = window.matchMedia("(max-width: 760px)");
+    const resize = () => {
+      if (!screen.matches) setMenu(false);
+    };
+    screen.addEventListener("change", resize);
     const close = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMenu(false);
-        menuButton.current?.focus();
+        requestAnimationFrame(() => menuButton.current?.focus());
+      }
+      if (event.key === "Tab") {
+        const items = Array.from(
+          sidebar.current?.querySelectorAll<HTMLElement>(
+            "a[href],button:not(:disabled),summary,[tabindex='0']",
+          ) || [],
+        ).filter((item) => item.getClientRects().length);
+        const first = items[0],
+          last = items.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
       }
     };
     window.addEventListener("keydown", close);
-    return () => window.removeEventListener("keydown", close);
+    return () => {
+      window.removeEventListener("keydown", close);
+      screen.removeEventListener("change", resize);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [menu]);
   return (
     <div className="app-shell">
       <a className="skip-link" href="#dashboard-content">
         Skip to dashboard content
       </a>
-      <aside id="workspace-sidebar" className={`sidebar ${menu ? "open" : ""}`}>
-        <Logo />
+      {menu && (
+        <button
+          className="sidebar-backdrop"
+          aria-label="Dismiss navigation backdrop"
+          onClick={() => {
+            setMenu(false);
+            requestAnimationFrame(() => menuButton.current?.focus());
+          }}
+        />
+      )}
+      <aside
+        ref={sidebar}
+        id="workspace-sidebar"
+        className={`sidebar ${menu ? "open" : ""}`}
+        role={menu ? "dialog" : undefined}
+        aria-modal={menu ? true : undefined}
+        aria-label="Restaurant navigation"
+      >
+        <div className="sidebar-brand">
+          <Logo />
+          <button
+            ref={closeButton}
+            className="sidebar-close"
+            aria-label="Close navigation"
+            onClick={() => {
+              setMenu(false);
+              requestAnimationFrame(() => menuButton.current?.focus());
+            }}
+          >
+            ×
+          </button>
+        </div>
         <div className="workspace">
           <span className="restaurant-icon">
             {state.restaurant.name.charAt(0) || "♥"}
@@ -87,29 +131,15 @@ export function Dashboard({ section, id }: { section: string; id?: string }) {
           </div>
         </div>
         <div className="sidebar-label">WORKSPACE</div>
-        <nav>
-          {navigation.map(([label, href, icon]) => (
-            <Link
-              aria-current={
-                ("/dashboard/" + section).replace(/\/$/, "") === href
-                  ? "page"
-                  : undefined
-              }
-              onClick={() => setMenu(false)}
-              className={
-                ("/dashboard/" + section).replace(/\/$/, "") === href
-                  ? "active"
-                  : ""
-              }
-              key={href}
-              href={href}
-            >
-              <span aria-hidden="true">{icon}</span>
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <DashboardNavigation
+          section={section}
+          testingAllowed={testingAllowed && !pathname.startsWith("/demo/")}
+          onNavigate={() => setMenu(false)}
+        />
         <div className="sidebar-bottom">
+          <div className="sidebar-mobile-account">
+            <AuthControls compact />
+          </div>
           <div className="help-card">
             <strong>A little help?</strong>
             <p>We’re here for your restaurant.</p>
@@ -118,7 +148,7 @@ export function Dashboard({ section, id }: { section: string; id?: string }) {
           <AccountIdentity />
         </div>
       </aside>
-      <div className="dashboard-main">
+      <div className="dashboard-main" inert={menu ? true : undefined}>
         <header className="dashboard-top">
           <button
             ref={menuButton}
@@ -131,13 +161,17 @@ export function Dashboard({ section, id }: { section: string; id?: string }) {
             ☰
           </button>
           <div className="breadcrumb">
-            Workspace <span>/</span>{" "}
-            {navigation.find(
+            <span className="breadcrumb-parent">
+              Workspace <span>/</span>{" "}
+            </span>
+            {dashboardNavigation.find(
               (n) => n[1] === `/dashboard${section ? "/" + section : ""}`,
             )?.[0] || "Employee profile"}
           </div>
           <DemoNotice />
-          <AuthControls compact />
+          <div className="dashboard-desktop-account">
+            <AuthControls compact />
+          </div>
         </header>
         <main
           id="dashboard-content"

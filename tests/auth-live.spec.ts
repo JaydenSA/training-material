@@ -222,6 +222,10 @@ test("public demo dashboard stays isolated from restaurant APIs", async ({
   ).toBeVisible();
   await page
     .locator(".sidebar nav")
+    .locator("summary", { hasText: "People" })
+    .click();
+  await page
+    .locator(".sidebar nav")
     .getByRole("link", { name: "Employees", exact: true })
     .click();
   await expect(page).toHaveURL(/\/demo\/dashboard\/employees$/);
@@ -239,6 +243,10 @@ test("public demo dashboard stays isolated from restaurant APIs", async ({
   await page.getByRole("button", { name: "Send appreciation" }).click();
   await page.getByRole("link", { name: /View restaurant records/ }).click();
   await expect(page).toHaveURL(/\/demo\/dashboard\/tips$/);
+  await page
+    .locator(".sidebar nav")
+    .locator("summary", { hasText: "People" })
+    .click();
   await page
     .locator(".sidebar nav")
     .getByRole("link", { name: "Ratings", exact: true })

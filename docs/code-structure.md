@@ -48,6 +48,10 @@ Prefer a local component until a pattern is used in multiple places. Add shared 
 
 `review-moderation.tsx` shares hidden-text presentation between Ratings and employee insights and provides a reasoned action/history panel. `moderation.ts` defines event types/validation; `db/moderation-repository.ts` enforces tenant and owner rules independently of the UI. `bulk-tags.tsx` uses existing workspace mutations for batches and lazily loads QR/ZIP generation (`fflate`) for downloads. `operations.ts` builds alerts from a redacted snapshot; its repository/API collect scoped counts, and `dashboard/alerts.tsx` polls only while visible. `comparisons.ts` provides testable employee/period calculations, displayed using shared filters, tables and CSV handling.
 
+## Navigation
+
+`dashboard/navigation.tsx` owns the grouped menu and shared breadcrumb labels. Native disclosure groups keep all existing destinations accessible and open the active group after navigation. `site-header.tsx` handles the public mobile menu. The dashboard shell provides the mobile backdrop, focus containment, Escape/close handling and body scroll lock; authentication remains in the existing Clerk controls, relocated into the drawer on small screens.
+
 ## Formatting and readability
 
 Run `pnpm format` to format the project and `pnpm format:check` to check it without rewriting files. Prettier is pinned as a development dependency and configured in `.prettierrc.json`; `.editorconfig` supplies matching indentation and line-ending settings for editors.
